@@ -1,0 +1,249 @@
+<mvc:View
+    controllerName="com.changemanagement.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    displayBlock="true"
+    xmlns:core="sap.ui.core"
+>
+    <f:DynamicPage
+        id="dynamicPage"
+        showFooter="true"
+    >
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title
+                        text="Change Management"
+                        level="H1"
+                    />
+                </f:heading>
+                <f:actions>
+                    <Button
+                        text="Create Request"
+                        type="Emphasized"
+                        press="onCreateRequest"
+                    />
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:content>
+            <VBox>
+                <Title
+                    text="Changes"
+                    level="H2"
+                    class="sapUiSmallMarginBottom"
+                />
+                <HBox
+                    class="sapUiTinyMarginBottom"
+                    alignItems="Center"
+                    wrap="Wrap"
+                >
+                    <VBox class="sapUiSmallMarginEnd">
+                        <Label text="System" />
+                        <Select
+                            id="systemFilter"
+                            width="10rem"
+                        >
+                            <items>
+                                <core:Item
+                                    key="All"
+                                    text="All"
+                                />
+                                <core:Item
+                                    key="BTP"
+                                    text="BTP"
+                                />
+                                <core:Item
+                                    key="S/4HANA"
+                                    text="S/4HANA"
+                                />
+                            </items>
+                        </Select>
+                    </VBox>
+                    <VBox class="sapUiSmallMarginEnd">
+                        <Label text="Type" />
+                        <Select
+                            id="typeFilter"
+                            width="10rem"
+                        >
+                            <items>
+                                <core:Item
+                                    key="All"
+                                    text="All"
+                                />
+                                <core:Item
+                                    key="Fix"
+                                    text="Fix"
+                                />
+                                <core:Item
+                                    key="Patch"
+                                    text="Patch"
+                                />
+                                <core:Item
+                                    key="Emergency Fix"
+                                    text="Emergency Fix"
+                                />
+                                <core:Item
+                                    key="Release"
+                                    text="Release"
+                                />
+                            </items>
+                        </Select>
+                    </VBox>
+                    <VBox class="sapUiSmallMarginEnd">
+                        <Label text="Status" />
+                        <Select
+                            id="statusFilter"
+                            width="10rem"
+                        >
+                            <items>
+                                <core:Item
+                                    key="All"
+                                    text="All"
+                                />
+                                <core:Item
+                                    key="In Approval"
+                                    text="In Approval"
+                                />
+                                <core:Item
+                                    key="Approved"
+                                    text="Approved"
+                                />
+                                <core:Item
+                                    key="Rejected"
+                                    text="Rejected"
+                                />
+                            </items>
+                        </Select>
+                    </VBox>
+                    <VBox class="sapUiSmallMarginEnd">
+                        <Label text="Approver Level" />
+                        <Select
+                            id="approverFilter"
+                            width="10rem"
+                        >
+                            <items>
+                                <core:Item
+                                    key="All"
+                                    text="All"
+                                />
+                                <core:Item
+                                    key="Level 1"
+                                    text="Level 1"
+                                />
+                                <core:Item
+                                    key="Level 2"
+                                    text="Level 2"
+                                />
+                                <core:Item
+                                    key="Testing"
+                                    text="Testing"
+                                />
+                            </items>
+                        </Select>
+                    </VBox>
+                    <VBox class="sapUiSmallMarginBegin">
+                        <Button
+                            text="Filter"
+                            type="Emphasized"
+                            press="onFilter"
+                        />
+                    </VBox>
+                </HBox>
+                <Table
+                    id="requestTable"
+                    items="{tablereqmodel>/}"
+                >
+                    <columns>
+                        <Column>
+                            <Text text="Title" />
+                        </Column>
+                        <Column>
+                            <Text text="System" />
+                        </Column>
+                        <Column>
+                            <Text text="Type" />
+                        </Column>
+                        <Column>
+                            <Text text="Status" />
+                        </Column>
+                        <Column>
+                            <Text text="Approver Level" />
+                        </Column>
+                        <Column>
+                            <Text text="Validation" />
+                        </Column>
+                        <Column visible="{= ${viewModel>/isApprover} }">
+                            <Text text="Action" />
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem
+                            type="Navigation"
+                            press="onRowPress"
+                        >
+                            <cells>
+                                <Text text="{tablereqmodel>TITLE}" />
+                                <Text text="{tablereqmodel>SYSTEM}" />
+                                <Text text="{tablereqmodel>TYPE}" />
+                                <Text text="{tablereqmodel>STATUS}" />
+                                <Text
+                                    text="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.getHighestLevel'}"
+                                />
+                                <!-- <Text text="{ApproverLevel}" /> -->
+                                <Text text="{tablereqmodel>VALIDATION}" />
+                                <!-- <HBox
+                                    visible="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.isUserAllowedToApprove'}"
+                                >
+                                    <Button
+                                        text="Approve"
+                                        type="Success"
+                                        press="onApprove"
+                                    />
+                                    <Button
+                                        text="Reject"
+                                        type="Reject"
+                                        press="onReject"
+                                        class="sapUiSmallMarginBegin"
+                                    />
+                                </HBox> -->
+                                <VBox>
+                                    <!-- Approve/Reject Buttons -->
+                                    <HBox
+                                        visible="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.isUserAllowedToApprove'}"
+                                    >
+                                        <Button
+                                            text="Approve"
+                                            type="Success"
+                                            press="onApprove"
+                                        />
+                                        <Button
+                                            text="Reject"
+                                            type="Reject"
+                                            press="onReject"
+                                            class="sapUiSmallMarginBegin"
+                                        />
+                                    </HBox>
+
+                                    <Text
+                                        visible="{
+                                        parts: [
+                                        'tablereqmodel>APPROVERLEVEL',
+                                        'tablereqmodel>STATUS',
+                                        'viewModel>/userLevel'
+                                        ],
+                                        formatter: '.isAlreadyApprovedForUser'
+                                    }"
+                                        text="Approved "
+                                    />
+                                </VBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </VBox>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>
