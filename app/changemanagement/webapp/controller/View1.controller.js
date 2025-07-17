@@ -30,6 +30,18 @@ sap.ui.define([
                 });
                 this.readrequestdata();
             }
+            var oModel = new sap.ui.model.json.JSONModel({
+                Roles: [
+                    { Category: "SBP", Key: "VCDE", Text: "VCDE" },
+                    { Category: "SBP", Key: "VCPR", Text: "VCPR" },
+                    { Category: "SBP", Key: "VCDT", Text: "VCDT" },
+                    { Category: "SBP", Key: "VCT1", Text: "VCT1" },
+                    { Category: "SBP", Key: "VCT2", Text: "VCT2" },
+                    { Category: "CLIENT 1", Key: "SCT", Text: "SCT" },
+                    { Category: "CLIENT 1", Key: "SCP", Text: "SCP" }
+                ]
+            });
+            this.getView().setModel(oModel, "rolesModel");
 
 
         },
@@ -63,9 +75,11 @@ sap.ui.define([
                     oView.addDependent(oDialog);
                     this._pDialog = oDialog;
                     this._pDialog.open();
+
                 }.bind(this));
             } else {
                 this._pDialog.open();
+
             }
         },
 
@@ -80,7 +94,8 @@ sap.ui.define([
                 Title: "",
                 System: "",
                 Type: "",
-                ApproverLevel: ""
+                ApproverLevel: "",
+                ApproverSystem: ""
             });
 
             oView.setModel(oCreateModel, "CreateRequestModel");
@@ -117,17 +132,17 @@ sap.ui.define([
             const System = this.byId("systemFilter").getSelectedKey();
             const Type = this.byId("typeFilter").getSelectedKey();
             const Status = this.byId("statusFilter").getSelectedKey();
-        
+
             const filters = { System, Type, Status };
             const oModel = this.getOwnerComponent().getModel();
-        
+
             oModel.callFunction("/FilterOperator", {
                 method: "GET",
                 urlParameters: {
                     filterdata: JSON.stringify(filters)
                 },
                 success: function (oData) {
-                    const parsedreqdata = JSON.parse(oData.FilterOperator); 
+                    const parsedreqdata = JSON.parse(oData.FilterOperator);
                     const reqModel = new sap.ui.model.json.JSONModel(parsedreqdata);
                     this.getView().setModel(reqModel, "tablereqmodel");
                 }.bind(this),
@@ -136,7 +151,7 @@ sap.ui.define([
                     console.error("OData error:", err);
                 }
             });
-        },        
+        },
 
         // onDialogSubmit: function () {
         //     const oModel = this.getOwnerComponent().getModel();
@@ -201,6 +216,14 @@ sap.ui.define([
             const oModel = this.getOwnerComponent().getModel();
             const oCreateModel = this.getView().getModel("CreateRequestModel");
             const oData = oCreateModel.getData();
+            const requiredFields = ["Title", "System", "Type", "ApproverSystem"];
+
+            const isValid = requiredFields.every(field => oData[field]);
+
+            if (!isValid) {
+                sap.m.MessageToast.show("Please fill in all required fields.");
+                return;
+            }
             const email = this.getView().getModel("viewModel").getProperty("/userEmail");
             const uniqueID = Date.now() % 1000000000 + Math.floor(Math.random() * 1000);
 
@@ -245,6 +268,7 @@ sap.ui.define([
                 SYSTEM: oData.System,
                 TYPE: oData.Type,
                 STATUS: status,
+                APPROVERSYSTEM: oData.ApproverSystem,
                 APPROVERLEVEL: approvallevel,
                 VALIDATION: validation,
                 CREATEDBY: email,
@@ -566,7 +590,19 @@ sap.ui.define([
             const viewModel = this.getView().getModel("viewModel");
             const isAdmin = viewModel.getProperty("/isAdmin");
             return isAdmin ? "Select any Approval level" : "No data available";
-        }
+        },
+        getValidationClass: function (sValue) {
+            switch (sValue) {
+              case "Failed":
+                return "customRed";
+              case "Passed":
+                return "customGreen";
+              default:
+                return "";
+            }
+          }
+      
+        
 
 
 

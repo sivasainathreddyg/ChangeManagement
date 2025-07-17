@@ -2,16 +2,17 @@
 context changemanagement {
 
   entity ChangeRequests {
-    key ID            : UUID;
-        Title         : String(255);
-        System        : String(50);
-        Type          : String(50);
-        Status        : String(50);
-        ApproverLevel : String(200);
-        Validation    : String(50);
-        NotApplicable : String(50);
-        createdBy     : String(100);
-        createdAt     : Timestamp;
+    key ID             : UUID;
+        Title          : String(255);
+        System         : String(50);
+        Type           : String(50);
+        Status         : String(50);
+        ApproverLevel  : String(200);
+        ApproverSystem : String(50);
+        Validation     : String(50);
+        NotApplicable  : String(50);
+        createdBy      : String(100);
+        createdAt      : Timestamp;
   }
 
   entity Approvers {
@@ -40,6 +41,7 @@ entity ChangeRequestView {
       TYPE             : String;
       STATUS           : String;
       APPROVERLEVEL    : String;
+      ApproverSystem   : String;
       VALIDATION       : String;
       NotApplicable    : String;
       CREATEDBY        : String;

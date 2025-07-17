@@ -10,13 +10,13 @@
         contentWidth="400px"
     >
         <VBox class="sapUiSmallMargin">
-            <Label text="Title" />
+            <Label text="Title"  required="true"/>
             <Input value="{CreateRequestModel>/Title}" />
 
-            <Label text="LandScape" />
+            <Label text="LandScape" required="true"/>
             <ComboBox
                 selectedKey="{CreateRequestModel>/System}"
-                placeholder="Select System"
+                placeholder="Select Landscape"
                 width="100%"
             >
                 <items>
@@ -31,7 +31,7 @@
                 </items>
             </ComboBox>
 
-            <Label text="Type" />
+            <Label text="Type"  required="true"/>
             <ComboBox
                 selectedKey="{CreateRequestModel>/Type}"
                 placeholder="Select Type"
@@ -56,8 +56,13 @@
                     />
                 </items>
             </ComboBox>
-            <Label text="Approver Level" visible="{viewModel>/isAdmin}" />
-            <ComboBox visible="{viewModel>/isAdmin}"
+            <Label
+                text="Approver Level"
+                visible="{viewModel>/isAdmin}"
+                required="true"
+            />
+            <ComboBox
+                visible="{viewModel>/isAdmin}"
                 selectedKey="{CreateRequestModel>/ApproverLevel}"
                 placeholder="Select Approver Level"
                 width="100%"
@@ -80,6 +85,22 @@
                         text="Level 4"
                     />
                 </items>
+            </ComboBox>
+            <Label text="System" required="true" />
+            <ComboBox
+                id="groupedComboBox"
+                items="{
+                    path: 'rolesModel>/Roles',
+                    sorter: { path: 'Category', group: true }
+                }"
+                width="100%"
+                selectedKey="{CreateRequestModel>/ApproverSystem}"
+                placeholder="Select the System"
+            >
+                <core:ListItem
+                    key="{rolesModel>Key}"
+                    text="{rolesModel>Text}"
+                />
             </ComboBox>
         </VBox>
         <endButton>

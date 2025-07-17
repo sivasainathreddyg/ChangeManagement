@@ -218,10 +218,14 @@
                                 demandPopin="true"
                                 minScreenWidth="Phone"
                             >
-                                <Text text="System" />
+                                <Text text="Landscape" />
                             </Column>
+
                             <Column>
                                 <Text text="Type" />
+                            </Column>
+                            <Column width="8%">
+                                <Text text="Approval System" />
                             </Column>
                             <Column>
                                 <Text text="Status" />
@@ -254,6 +258,9 @@
                                     <Text text="{tablereqmodel>TITLE}" />
                                     <Text text="{tablereqmodel>SYSTEM}" />
                                     <Text text="{tablereqmodel>TYPE}" />
+                                    <Text
+                                        text="{tablereqmodel>APPROVERSYSTEM}"
+                                    />
                                     <Text text="{tablereqmodel>STATUS}" />
                                     <HBox
                                         justifyContent="Center"
@@ -271,24 +278,12 @@
                                         text="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.getHighestLevel'}"
                                     />
                                     <!-- <Text text="{ApproverLevel}" /> -->
-                                    <Text text="{tablereqmodel>VALIDATION}" />
-                                    <!-- <HBox
-                                    visible="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.isUserAllowedToApprove'}"
-                                >
-                                    <Button
-                                        text="Approve"
-                                        type="Success"
-                                        press="onApprove"
+                                    <Text
+                                        text="{tablereqmodel>VALIDATION}"
+                                        class="{path:'tablereqmodel>APPROVERLEVEL',formatter:'.getValidationClass'}"
                                     />
-                                    <Button
-                                        text="Reject"
-                                        type="Reject"
-                                        press="onReject"
-                                        class="sapUiSmallMarginBegin"
-                                    />
-                                </HBox> -->
+
                                     <VBox width="100%">
-                                        <!-- Approve/Reject Buttons -->
                                         <HBox
                                             visible="{
                                     parts: [

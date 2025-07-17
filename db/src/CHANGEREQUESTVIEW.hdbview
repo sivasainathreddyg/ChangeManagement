@@ -6,6 +6,7 @@ SELECT
     "cr"."TYPE",
     "cr"."STATUS",
     "cr"."APPROVERLEVEL",
+    "cr"."APPROVERSYSTEM",
     "cr"."VALIDATION",
     "cr"."CREATEDBY",
     "cr"."NOTAPPLICABLE",
