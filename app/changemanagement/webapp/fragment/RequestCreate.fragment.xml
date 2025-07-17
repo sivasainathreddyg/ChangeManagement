@@ -13,10 +13,11 @@
             <Label text="Title" />
             <Input value="{CreateRequestModel>/Title}" />
 
-            <Label text="System" />
+            <Label text="LandScape" />
             <ComboBox
                 selectedKey="{CreateRequestModel>/System}"
                 placeholder="Select System"
+                width="100%"
             >
                 <items>
                     <core:Item
@@ -31,7 +32,11 @@
             </ComboBox>
 
             <Label text="Type" />
-            <ComboBox selectedKey="{CreateRequestModel>/Type}" placeholder="Select Type">
+            <ComboBox
+                selectedKey="{CreateRequestModel>/Type}"
+                placeholder="Select Type"
+                width="100%"
+            >
                 <items>
                     <core:Item
                         key="Fix"
@@ -48,6 +53,31 @@
                     <core:Item
                         key="Release"
                         text="Release"
+                    />
+                </items>
+            </ComboBox>
+            <Label text="Approver Level" visible="{viewModel>/isAdmin}" />
+            <ComboBox visible="{viewModel>/isAdmin}"
+                selectedKey="{CreateRequestModel>/ApproverLevel}"
+                placeholder="Select Approver Level"
+                width="100%"
+            >
+                <items>
+                    <core:Item
+                        key="Level 1"
+                        text="Level 1"
+                    />
+                    <core:Item
+                        key="Level 2"
+                        text="Level 2"
+                    />
+                    <core:Item
+                        key="Level 3"
+                        text="Level 3"
+                    />
+                    <core:Item
+                        key="Level 4"
+                        text="Level 4"
                     />
                 </items>
             </ComboBox>
