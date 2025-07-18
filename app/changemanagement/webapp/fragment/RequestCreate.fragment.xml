@@ -1,6 +1,7 @@
 <core:FragmentDefinition
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
+    xmlns:u="sap.ui.unified"
 >
     <Dialog
         id="createDialog"
@@ -10,10 +11,16 @@
         contentWidth="400px"
     >
         <VBox class="sapUiSmallMargin">
-            <Label text="Title"  required="true"/>
+            <Label
+                text="Title"
+                required="true"
+            />
             <Input value="{CreateRequestModel>/Title}" />
 
-            <Label text="LandScape" required="true"/>
+            <Label
+                text="LandScape"
+                required="true"
+            />
             <ComboBox
                 selectedKey="{CreateRequestModel>/System}"
                 placeholder="Select Landscape"
@@ -31,7 +38,10 @@
                 </items>
             </ComboBox>
 
-            <Label text="Type"  required="true"/>
+            <Label
+                text="Type"
+                required="true"
+            />
             <ComboBox
                 selectedKey="{CreateRequestModel>/Type}"
                 placeholder="Select Type"
@@ -86,7 +96,10 @@
                     />
                 </items>
             </ComboBox>
-            <Label text="System" required="true" />
+            <Label
+                text="System"
+                required="true"
+            />
             <ComboBox
                 id="groupedComboBox"
                 items="{
@@ -102,6 +115,14 @@
                     text="{rolesModel>Text}"
                 />
             </ComboBox>
+            <Label text="Upload MTAR File" />
+            <u:FileUploader width="100%"
+                id="fileUploader"
+                name="mtarFile"
+                fileType="mtar"
+                placeholder="Choose a .mtar file"
+                change="onFileUploadChange"
+            />
         </VBox>
         <endButton>
             <Button

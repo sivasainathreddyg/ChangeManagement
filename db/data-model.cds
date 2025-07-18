@@ -13,7 +13,20 @@ context changemanagement {
         NotApplicable  : String(50);
         createdBy      : String(100);
         createdAt      : Timestamp;
+
   }
+
+  entity MediaFile {
+    key id        : Association to ChangeRequests;
+
+        @Core.MediaType  : mediaType
+        content   : LargeBinary;
+
+        @Core.IsMediaType: true
+        mediaType : String;
+        fileName  : String;
+        url       : String;
+  };
 
   entity Approvers {
     key ID    : UUID;

@@ -239,6 +239,9 @@
                             <Column>
                                 <Text text="Validation" />
                             </Column>
+                            <Column>
+                                <Text text="Download" />
+                            </Column>
                             <Column
                                 visible="{= ${viewModel>/isApprover} }"
                                 demandPopin="true"
@@ -281,6 +284,10 @@
                                     <Text
                                         text="{tablereqmodel>VALIDATION}"
                                         class="{path:'tablereqmodel>APPROVERLEVEL',formatter:'.getValidationClass'}"
+                                    />
+                                    <Button
+                                        icon="sap-icon://download"
+                                        press="ondownloadmtarfile"
                                     />
 
                                     <VBox width="100%">

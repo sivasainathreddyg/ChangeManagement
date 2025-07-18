@@ -1,26 +1,67 @@
 const cds = require("@sap/cds")
 module.exports = srv => {
-    srv.on("CreateRequest", async req => {
+    // srv.on("CreateRequest", async req => {
+    //     try {
+    //         if (!req.data || !req.data.requestdata) {
+    //             return { error: "Missing Request data" };
+    //         }
+
+    //         let newcreaterequestdata;
+    //         try {
+    //             newcreaterequestdata = JSON.parse(req.data.requestdata);
+    //         } catch (error) {
+    //             return { error: "Invalid Request data format" };
+    //         }
+
+    //         await cds.transaction(req).run(
+    //             INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(newcreaterequestdata)
+    //         );
+
+    //         return { value: "Request data created successfully" };
+    //     } catch (error) {
+    //         console.error("Error creating Request:", error);
+    //         return { error: "Failed to create Request" };
+    //     }
+    // });
+    srv.on("CreateRequest", async (req) => {
+        const db = cds.transaction(req); // Open single transactional context
+
         try {
-            if (!req.data || !req.data.requestdata) {
-                return { error: "Missing Request data" };
+            if (!req.data || !req.data.requestdata || !req.data.filedata) {
+                return "Missing request or file data";
             }
 
-            let newcreaterequestdata;
+            let requestData, fileData;
             try {
-                newcreaterequestdata = JSON.parse(req.data.requestdata);
-            } catch (error) {
-                return { error: "Invalid Request data format" };
+                requestData = JSON.parse(req.data.requestdata);
+                fileData = JSON.parse(req.data.filedata);
+                
+            } catch (e) {
+                return "Invalid JSON format";
             }
 
-            await cds.transaction(req).run(
-                INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(newcreaterequestdata)
-            );
+            if (fileData.CONTENT && typeof fileData.CONTENT === "string") {
+                fileData.CONTENT = Buffer.from(fileData.CONTENT, "base64");
+            }
 
-            return { value: "Request data created successfully" };
-        } catch (error) {
-            console.error("Error creating Request:", error);
-            return { error: "Failed to create Request" };
+            try {
+                await cds.transaction(req).run(INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(requestData));
+            } catch (e) {
+                console.error("Error inserting CHANGEREQUEST:", e);
+                throw e;
+            }
+
+            try {
+                await cds.transaction(req).run(INSERT.into("CHANGEMANAGEMENT_MEDIAFILE").entries(fileData));
+            } catch (e) {
+                console.error("Error inserting MEDIAFILE:", e);
+                throw e;
+            }
+
+            return "Request and attachment created successfully";
+        } catch (err) {
+            console.error(" Transaction failed and rolled back:", err);
+            return "Failed to create request or file. Transaction rolled back.";
         }
     });
 
