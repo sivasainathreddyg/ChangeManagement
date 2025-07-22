@@ -5,7 +5,7 @@
 >
     <Dialog
         id="createDialog"
-        title="Create Change Request"
+        title="{= ${viewModel>/mode} === 'Update' ? 'Update Change Request' : 'Create Change Request'}"
         draggable="true"
         resizable="true"
         contentWidth="400px"
@@ -66,6 +66,7 @@
                     />
                 </items>
             </ComboBox>
+
             <Label
                 text="Approver Level"
                 visible="{viewModel>/isAdmin}"
@@ -96,6 +97,7 @@
                     />
                 </items>
             </ComboBox>
+
             <Label
                 text="System"
                 required="true"
@@ -115,15 +117,19 @@
                     text="{rolesModel>Text}"
                 />
             </ComboBox>
-            <Label text="Upload MTAR File" />
-            <u:FileUploader width="100%"
+
+            <Label text="Upload MTAR File" visible="{= ${viewModel>/mode} === 'Create'}"/>
+            <u:FileUploader
+                width="100%"
                 id="fileUploader"
                 name="mtarFile"
                 fileType="mtar"
                 placeholder="Choose a .mtar file"
                 change="onFileUploadChange"
+                visible="{= ${viewModel>/mode} === 'Create'}"
             />
         </VBox>
+
         <endButton>
             <Button
                 text="Cancel"
@@ -132,7 +138,7 @@
         </endButton>
         <beginButton>
             <Button
-                text="Submit"
+                text="{= ${viewModel>/mode} === 'Update' ? 'Update' : 'Submit'}"
                 type="Emphasized"
                 press="onDialogSubmit"
             />

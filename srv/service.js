@@ -24,46 +24,53 @@ module.exports = srv => {
     //     }
     // });
     srv.on("CreateRequest", async (req) => {
-        const db = cds.transaction(req); // Open single transactional context
+        const db = cds.transaction(req);
 
         try {
-            if (!req.data || !req.data.requestdata || !req.data.filedata) {
-                return "Missing request or file data";
+            const { requestdata, filedata } = req.data || {};
+
+            if (!requestdata) {
+                return "Missing request data";
             }
 
             let requestData, fileData;
             try {
-                requestData = JSON.parse(req.data.requestdata);
-                fileData = JSON.parse(req.data.filedata);
-                
+                requestData = JSON.parse(requestdata);
+                if (filedata) {
+                    fileData = JSON.parse(filedata);
+                }
             } catch (e) {
-                return "Invalid JSON format";
-            }
-
-            if (fileData.CONTENT && typeof fileData.CONTENT === "string") {
-                fileData.CONTENT = Buffer.from(fileData.CONTENT, "base64");
+                console.error("Invalid JSON input:", e);
+                return "Invalid JSON format in request or file data";
             }
 
             try {
-                await cds.transaction(req).run(INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(requestData));
+                await db.run(INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(requestData));
             } catch (e) {
                 console.error("Error inserting CHANGEREQUEST:", e);
                 throw e;
             }
 
-            try {
-                await cds.transaction(req).run(INSERT.into("CHANGEMANAGEMENT_MEDIAFILE").entries(fileData));
-            } catch (e) {
-                console.error("Error inserting MEDIAFILE:", e);
-                throw e;
+            if (fileData && fileData.CONTENT) {
+                try {
+                    if (typeof fileData.CONTENT === "string") {
+                        fileData.CONTENT = Buffer.from(fileData.CONTENT, "base64");
+                    }
+
+                    await db.run(INSERT.into("CHANGEMANAGEMENT_MEDIAFILE").entries(fileData));
+                } catch (e) {
+                    console.error("Error inserting MEDIAFILE:", e);
+                    throw e;
+                }
             }
 
-            return "Request and attachment created successfully";
+            return "Request created successfully" + (fileData ? " with attachment." : " without attachment.");
         } catch (err) {
-            console.error(" Transaction failed and rolled back:", err);
+            console.error("Transaction failed and rolled back:", err);
             return "Failed to create request or file. Transaction rolled back.";
         }
     });
+
 
     srv.on("ReadReqdata", async (req) => {
         try {
@@ -115,7 +122,7 @@ module.exports = srv => {
         }
     })
 
-    srv.on("UpdateReqData", async (req) => {
+    srv.on("UpdateReqDataApprove", async (req) => {
         try {
             const updatedata = JSON.parse(req.data.updatedRequest);
             const Id = updatedata.ID;
@@ -139,7 +146,23 @@ module.exports = srv => {
             return req.error(500, "Error updating Change request.");
         }
     });
-
+    srv.on("UpdateReqData", async (req) => {
+        try {
+            const Updateddata = JSON.parse(req.data.updateddata);
+            const Id = Updateddata.ID;
+            const Updatedpayload = {
+                TITLE: Updateddata.Title,
+                SYSTEM: Updateddata.System,
+                TYPE: Updateddata.Type,
+                APPROVERSYSTEM: Updateddata.ApproverSystem
+            }
+            await cds.update('CHANGEMANAGEMENT_CHANGEREQUESTS').set(Updatedpayload).where({ ID: Id });
+            return 'Change request updated successfully';
+        } catch (err) {
+            console.error("Error updating Change request:", err);
+            return req.error(500, "Error updating Change request.");
+        }
+    })
 
     srv.on("UpdateReqDataReject", async (req) => {
         try {

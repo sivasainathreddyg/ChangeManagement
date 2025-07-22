@@ -12,7 +12,7 @@ sap.ui.define([
             // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
             const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
             this.getView().setModel(viewModel, "viewModel");
-            const email = "admin@gmail.com";
+            const email = "sai@gmail.com";
             if (email === "admin@gmail.com") {
                 viewModel.setProperty("/isAdmin", true);
                 viewModel.setProperty("/userEmail", email);
@@ -82,6 +82,59 @@ sap.ui.define([
                 sap.ui.getCore().byId("fileUploader").setValue("");
             }
         },
+        onTableSelectionChange: function (oEvent) {
+            var oTable = this.byId("requestTable");
+            var oSelectedItem = oTable.getSelectedItem();
+            var oUpdateButton = this.byId("idupdatebtn");
+
+            if (oSelectedItem) {
+                oUpdateButton.setEnabled(true);
+            } else {
+                oUpdateButton.setEnabled(false);
+            }
+        },
+        onUpdateSelectedRow: function () {
+            var oTable = this.byId("requestTable");
+            var oSelectedItem = oTable.getSelectedItem();
+
+            if (!oSelectedItem) {
+                MessageToast.show("Please select a row to update.");
+                return;
+            }
+
+            var oContext = oSelectedItem.getBindingContext("tablereqmodel");
+            var oData = oContext.getObject();
+
+
+            var selectedData = {
+                ID:oData.ID,
+                Title: oData.TITLE || "",
+                System: oData.SYSTEM || "",
+                Type: oData.TYPE || "",
+                ApproverLevel: oData.APPROVERLEVEL || "",
+                ApproverSystem: oData.APPROVERSYSTEM || ""
+            };
+
+            // Set update mode
+            var oViewModel = this.getView().getModel("viewModel");
+            oViewModel.setProperty("/mode", "Update");
+
+            // Set model with selected data
+            var oCreateModel = new JSONModel(selectedData);
+            this.getView().setModel(oCreateModel, "CreateRequestModel");
+
+            // Open fragment
+            if (!this.pDialog) {
+                this.pDialog = sap.ui.xmlfragment(
+                    this.getView().getId(),
+                    "com.changemanagement.fragment.RequestCreate",
+                    this
+                );
+                this.getView().addDependent(this.pDialog);
+            }
+
+            this.pDialog.open();
+        },
 
         onDialogCancel: function () {
             this.pDialog.close();
@@ -99,6 +152,8 @@ sap.ui.define([
             });
 
             oView.setModel(oCreateModel, "CreateRequestModel");
+            var oViewModel = this.getView().getModel("viewModel");
+            oViewModel.setProperty("/mode", "Create");
             this.opencreaterequestProjectDialog();
             // sap.ui.getCore().byId("fileUploader").setValue("");
         },
@@ -166,33 +221,58 @@ sap.ui.define([
             }.bind(this);
             reader.readAsDataURL(this.uploadedFile);
         },
+        onDialogSubmit: function () {
+            var oViewModel = this.getView().getModel("viewModel");
+            var sMode = oViewModel.getProperty("/mode");
+            var oData = this.getView().getModel("CreateRequestModel").getData();
 
-        onDialogSubmit: async function () {
-            const oFile = this.uploadedFile;
+            if (sMode === "Update") {
+                this.updateChangeRequest(oData);
+            } else {
 
-            if (!oFile) {
-                MessageToast.show("Please upload a file.");
-                return;
+                this.createChangeRequest();
             }
+
+            this.pDialog.close();
+        },
+        updateChangeRequest: function (oData) {
+            const oModel = this.getOwnerComponent().getModel();
+            oModel.callFunction("/UpdateReqData", {
+                method: "GET",
+                urlParameters: { updateddata: JSON.stringify(oData) },
+                success: function (odata) {
+                    if (odata.UpdateReqData === "Change request updated successfully") {
+                        sap.m.MessageToast.show("Approved")
+                        this.readrequestdata();
+                    }
+                }.bind(this), error: function (err) {
+                    sap.m.MessageToast.show(err.UpdateReqData
+                        
+                    )
+                }
+            })
+
+        },
+
+        createChangeRequest: async function () {
+            const oFile = this.uploadedFile;
 
             let ATTACHMENTNAME = "";
             let ATTACHMENTTYPE = "";
             let ATTACHMENTCONTENT = "";
+            let hasFile = false;
 
-            try {
-                // const arrayBuffer = await oFile.arrayBuffer();
-                // const base64String = await this.convertToBase64(arrayBuffer);
-
-                // const arrayBuffer = await oFile.arrayBuffer();
-                // const buffer = new Uint8Array(arrayBuffer);
-
-                ATTACHMENTNAME = oFile.name;
-                ATTACHMENTTYPE = oFile.type || "application/x-mtar";
-                ATTACHMENTCONTENT = this.base64Content;
-            } catch (err) {
-                console.error(err);
-                MessageBox.error("File processing failed.");
-                return;
+            if (oFile) {
+                try {
+                    ATTACHMENTNAME = oFile.name;
+                    ATTACHMENTTYPE = oFile.type || "application/x-mtar";
+                    ATTACHMENTCONTENT = this.base64Content;
+                    hasFile = true;
+                } catch (err) {
+                    console.error(err);
+                    MessageBox.error("File processing failed.");
+                    return;
+                }
             }
 
             const oModel = this.getOwnerComponent().getModel();
@@ -201,7 +281,6 @@ sap.ui.define([
             const requiredFields = ["Title", "System", "Type", "ApproverSystem"];
 
             const isValid = requiredFields.every(field => oData[field]);
-
             if (!isValid) {
                 MessageToast.show("Please fill in all required fields.");
                 return;
@@ -231,14 +310,12 @@ sap.ui.define([
             if (email === "admin@gmail.com") {
                 const level = oData.ApproverLevel;
                 approvallevel = adminLevelMap[level] || "";
-
                 if (approvallevel === "") {
                     status = "Approved";
                     validation = "Passed";
                 }
             } else {
                 approvallevel = levelMap[email] || "Level 1, Level 2, Level 3, Level 4";
-
                 if (email === "reddy@gmail.com") {
                     status = "Approved";
                     validation = "Passed";
@@ -255,33 +332,36 @@ sap.ui.define([
                 APPROVERLEVEL: approvallevel,
                 VALIDATION: validation,
                 CREATEDBY: email,
-                CREATEDAT: new Date().toISOString(),
+                CREATEDAT: new Date().toISOString()
+            };
 
+            let urlParameters = {
+                requestdata: JSON.stringify(newRequest)
             };
-            const filePayload = {
-                ID_ID: String(uniqueID),
-                FILENAME: ATTACHMENTNAME,
-                MEDIATYPE: ATTACHMENTTYPE,
-                CONTENT: ATTACHMENTCONTENT
-            };
+
+            if (hasFile) {
+                const filePayload = {
+                    ID_ID: String(uniqueID),
+                    FILENAME: ATTACHMENTNAME,
+                    MEDIATYPE: ATTACHMENTTYPE,
+                    CONTENT: ATTACHMENTCONTENT
+                };
+                urlParameters.filedata = JSON.stringify(filePayload);
+            }
 
             oModel.callFunction("/CreateRequest", {
                 method: "POST",
-                urlParameters: {
-                    requestdata: JSON.stringify(newRequest),
-                    filedata: JSON.stringify(filePayload)
-                },
+                urlParameters: urlParameters,
                 success: function (oData) {
                     try {
-                        if (oData.CreateRequest === undefined) {
+                        if (!oData.CreateRequest) {
                             MessageToast.show("Request was not created.");
                             return;
-                        } else {
-                            MessageToast.show(oData.CreateRequest);
-                            this.pDialog.close();
-                            this.readrequestdata();
-                            oModel.refresh(true);
                         }
+                        MessageToast.show(oData.CreateRequest);
+                        this.pDialog.close();
+                        this.readrequestdata();
+                        oModel.refresh(true);
                     } catch (error) {
                         MessageBox.show(error.message || error);
                     }
@@ -291,31 +371,45 @@ sap.ui.define([
                 }
             });
         },
+
         ondownloadmtarfile: async function (oEvent) {
             const oContext = oEvent.getSource().getBindingContext("tablereqmodel");
             const oData = oContext.getObject();
             const sId = oData.ID;
-        
+
             const sServiceUrl = "/v2/odata/v4/change-management";
             const sDownloadUrl = `${sServiceUrl}/MediaFile('${sId}')/content`;
-        
+
             try {
+
+                const metaResponse = await fetch(`${sServiceUrl}/MediaFile('${sId}')`);
+
+                if (metaResponse.status === 404) {
+                    MessageBox.warning("No attachment found for this request.");
+                    return;
+                }
+
+                if (!metaResponse.ok) {
+                    throw new Error("Failed to check file existence.");
+                }
+
+
                 const response = await fetch(sDownloadUrl);
-        
+
                 if (!response.ok) {
                     throw new Error("Download failed");
                 }
-        
-                // Get the file blob and headers
+
+
                 const blob = await response.blob();
-        
-                // Optional: Read filename from content-disposition header if your CAP backend sends it
+
+
                 let fileName = `file_${sId}.mtar`;
                 const disposition = response.headers.get("Content-Disposition");
                 if (disposition && disposition.indexOf("filename=") !== -1) {
                     fileName = disposition.split("filename=")[1].replace(/"/g, "");
                 }
-        
+
                 // Create a link and trigger the download
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
@@ -325,11 +419,11 @@ sap.ui.define([
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-        
+
             } catch (err) {
                 MessageBox.error("Error downloading file: " + err.message);
             }
-        },        
+        },
         onApprove: function (oEvent) {
             const oModel = this.getOwnerComponent().getModel();
             const viewModel = this.getView().getModel("viewModel");
@@ -354,18 +448,18 @@ sap.ui.define([
                 VALIDATION: validation
 
             };
-            oModel.callFunction("/UpdateReqData", {
+            oModel.callFunction("/UpdateReqDataApprove", {
                 method: "GET",
                 urlParameters: {
                     updatedRequest: JSON.stringify(updatedRequestdata)
                 },
                 success: function (odata) {
-                    if (odata.UpdateReqData === "Change request updated successfully") {
+                    if (odata.UpdateReqDataApprove === "Change request updated successfully") {
                         sap.m.MessageToast.show("Approved")
                         this.readrequestdata();
                     }
                 }.bind(this), error: function (err) {
-                    sap.m.MessageToast.show(err.UpdateReqData)
+                    sap.m.MessageToast.show(err.UpdateReqDataApprove)
                 }
             })
         },
@@ -394,18 +488,18 @@ sap.ui.define([
                 NOTAPPLICABLE: userLevel
 
             };
-            oModel.callFunction("/UpdateReqData", {
+            oModel.callFunction("/UpdateReqDataApprove", {
                 method: "GET",
                 urlParameters: {
                     updatedRequest: JSON.stringify(updatedRequestdata)
                 },
                 success: function (odata) {
-                    if (odata.UpdateReqData === "Change request updated successfully") {
+                    if (odata.UpdateReqDataApprove === "Change request updated successfully") {
                         sap.m.MessageToast.show("Approved")
                         this.readrequestdata();
                     }
                 }.bind(this), error: function (err) {
-                    sap.m.MessageToast.show(err.UpdateReqData)
+                    sap.m.MessageToast.show(err.UpdateReqDataApprove)
                 }
             })
         },

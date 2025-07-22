@@ -16,9 +16,10 @@ service ChangeManagementService {
 
   // action Readdata()                          returns String;
   function ReadReqdata()                                          returns String;
-  function UpdateReqData(updatedRequest : String)                 returns String;
+  function UpdateReqDataApprove(updatedRequest : String)          returns String;
   function UpdateReqDataReject(RejectupdateRequest : String)      returns String;
   function Rejectionnote(ID : String)                             returns String;
   function FilterOperator(filterdata : String)                    returns String;
+  function UpdateReqData(updateddata : String)                    returns String;
 
 }

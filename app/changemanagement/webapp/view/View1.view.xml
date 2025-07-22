@@ -24,6 +24,13 @@
                         type="Emphasized"
                         press="onCreateRequest"
                     />
+                     <Button
+                            text="Update"
+                            id="idupdatebtn"
+                            press="onUpdateSelectedRow"
+                            enabled="false"
+                            type="Emphasized"
+                        />
                 </f:actions>
             </f:DynamicPageTitle>
         </f:title>
@@ -31,7 +38,7 @@
         <f:content>
             <VBox>
                 <Title
-                    text="Changes"
+                    text=""
                     level="H2"
                     class="sapUiSmallMarginBottom"
                 />
@@ -161,42 +168,46 @@
                     </HBox>
 
                     <!-- Right side: Select Approver Level -->
-                    <HBox
-                        visible="{viewModel>/isAdmin}"
-                        alignItems="Center"
-                        justifyContent="End"
-                        class="sapUiSmallMarginTop sapUiSmallMarginEnd"
-                    >
-                        <Label
-                            text="Select Approver Level"
-                            class="sapUiSmallMarginEnd"
-                            design="Bold"
-                        />
-                        <ComboBox
-                            id="approverLevel"
-                            width="15rem"
-                            change=".onApproverLevelChange"
+                    
+                       
+
+                        <HBox
+                            visible="{viewModel>/isAdmin}"
+                            alignItems="Center"
+                            justifyContent="End"
+                            class="sapUiSmallMarginTop sapUiSmallMarginEnd"
                         >
-                            <items>
-                                <core:Item
-                                    key="Level 1"
-                                    text="Level 1"
-                                />
-                                <core:Item
-                                    key="Level 2"
-                                    text="Level 2"
-                                />
-                                <core:Item
-                                    key="Level 3"
-                                    text="Level 3"
-                                />
-                                <core:Item
-                                    key="Level 4"
-                                    text="Level 4"
-                                />
-                            </items>
-                        </ComboBox>
-                    </HBox>
+                            <Label
+                                text="Select Approver Level"
+                                class="sapUiSmallMarginEnd"
+                                design="Bold"
+                            />
+                            <ComboBox
+                                id="approverLevel"
+                                width="15rem"
+                                change=".onApproverLevelChange"
+                            >
+                                <items>
+                                    <core:Item
+                                        key="Level 1"
+                                        text="Level 1"
+                                    />
+                                    <core:Item
+                                        key="Level 2"
+                                        text="Level 2"
+                                    />
+                                    <core:Item
+                                        key="Level 3"
+                                        text="Level 3"
+                                    />
+                                    <core:Item
+                                        key="Level 4"
+                                        text="Level 4"
+                                    />
+                                </items>
+                            </ComboBox>
+                        </HBox>
+                    
                 </HBox>
 
                 <ScrollContainer
@@ -209,6 +220,8 @@
                         id="requestTable"
                         items="{tablereqmodel>/}"
                         noDataText="{path: 'viewModel>/isAdmin', formatter: '.getNoDataText'}"
+                        mode="SingleSelectLeft"
+                        selectionChange="onTableSelectionChange"
                     >
                         <columns>
                             <Column>
@@ -230,7 +243,7 @@
                             <Column>
                                 <Text text="Status" />
                             </Column>
-                            <Column>
+                            <Column width="10%">
                                 <Text text="ReasonForRejection" />
                             </Column>
                             <Column>
@@ -239,7 +252,7 @@
                             <Column>
                                 <Text text="Validation" />
                             </Column>
-                            <Column>
+                            <Column visible="{viewModel>/isAdmin}">
                                 <Text text="Download" />
                             </Column>
                             <Column
