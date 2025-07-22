@@ -129,7 +129,9 @@ module.exports = srv => {
 
             const updatePayload = {
                 APPROVERLEVEL: updatedata.APPROVERLEVEL,
-                STATUS: updatedata.STATUS
+                STATUS: updatedata.STATUS,
+                VALIDATION:updatedata.VALIDATION,
+                APPROVEDDATE:updatedata.APPROVEDDATE
             };
 
             if (updatedata.NOTAPPLICABLE) {
@@ -154,7 +156,9 @@ module.exports = srv => {
                 TITLE: Updateddata.Title,
                 SYSTEM: Updateddata.System,
                 TYPE: Updateddata.Type,
-                APPROVERSYSTEM: Updateddata.ApproverSystem
+                APPROVERSYSTEM: Updateddata.ApproverSystem,
+                COMMITID:Updateddata.Commitid,
+                DESCRIPTION:Updateddata.description
             }
             await cds.update('CHANGEMANAGEMENT_CHANGEREQUESTS').set(Updatedpayload).where({ ID: Id });
             return 'Change request updated successfully';

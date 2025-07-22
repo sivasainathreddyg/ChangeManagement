@@ -16,6 +16,17 @@
                 required="true"
             />
             <Input value="{CreateRequestModel>/Title}" />
+            <Label
+                text="Commit ID"
+                required="true"
+            />
+            <Input value="{CreateRequestModel>/Commitid}" />
+
+            <Label
+                text="Description"
+                required="true"
+            />
+            <Input value="{CreateRequestModel>/description}" />
 
             <Label
                 text="LandScape"
@@ -118,7 +129,10 @@
                 />
             </ComboBox>
 
-            <Label text="Upload MTAR File" visible="{= ${viewModel>/mode} === 'Create'}"/>
+            <Label
+                text="Upload MTAR File"
+                visible="{= ${viewModel>/mode} === 'Create'}"
+            />
             <u:FileUploader
                 width="100%"
                 id="fileUploader"

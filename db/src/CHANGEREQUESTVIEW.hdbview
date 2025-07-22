@@ -1,20 +1,22 @@
 VIEW "CHANGEREQUESTVIEW" AS
-SELECT 
-    "cr"."ID",
-    "cr"."TITLE",
-    "cr"."SYSTEM",
-    "cr"."TYPE",
-    "cr"."STATUS",
-    "cr"."APPROVERLEVEL",
-    "cr"."APPROVERSYSTEM",
-    "cr"."VALIDATION",
-    "cr"."CREATEDBY",
-    "cr"."NOTAPPLICABLE",
-    "cr"."CREATEDAT",
-    "rl"."REJECTEDBY",
-    "rl"."REJECTEDLEVEL",
-    "rl"."REJECTIONCOMMENT",
-    "rl"."REJECTEDAT"
+SELECT "cr"."ID",
+  "cr"."TITLE",
+  "cr"."SYSTEM",
+  "cr"."TYPE",
+  "cr"."STATUS",
+  "cr"."APPROVERLEVEL",
+  "cr"."APPROVERSYSTEM",
+  "cr"."VALIDATION",
+  "cr"."CREATEDBY",
+  "cr"."NOTAPPLICABLE",
+  "cr"."CREATEDAT",
+  "cr"."COMMITID",
+  "cr"."DESCRIPTION",
+  "cr"."APPROVEDDATE",
+  "rl"."REJECTEDBY",
+  "rl"."REJECTEDLEVEL",
+  "rl"."REJECTIONCOMMENT",
+  "rl"."REJECTEDAT"
 FROM CHANGEMANAGEMENT_CHANGEREQUESTS AS "cr"
-LEFT OUTER JOIN CHANGEMANAGEMENT_REJECTIONLOG AS "rl"
-    ON "cr"."ID" = "rl"."REQUESTID_ID";
+  LEFT OUTER JOIN CHANGEMANAGEMENT_REJECTIONLOG AS "rl"
+ ON "cr"."ID" = "rl"."REQUESTID_ID";

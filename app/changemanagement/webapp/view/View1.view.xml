@@ -24,13 +24,13 @@
                         type="Emphasized"
                         press="onCreateRequest"
                     />
-                     <Button
-                            text="Update"
-                            id="idupdatebtn"
-                            press="onUpdateSelectedRow"
-                            enabled="false"
-                            type="Emphasized"
-                        />
+                    <Button
+                        text="Update"
+                        id="idupdatebtn"
+                        press="onUpdateSelectedRow"
+                        enabled="false"
+                        type="Emphasized"
+                    />
                 </f:actions>
             </f:DynamicPageTitle>
         </f:title>
@@ -168,14 +168,25 @@
                     </HBox>
 
                     <!-- Right side: Select Approver Level -->
-                    
-                       
+                    <HBox
+                        visible="{viewModel>/isAdmin}"
+                        class="sapUiSmallMarginTop sapUiSmallMarginEnd"
+                    >
+                        <DateRangeSelection
+                            id="idDateRange"
+                            displayFormat="yyyy-MM-dd"
+                            change="onDateRangeChange"
+                        />
+                        <Button
+                            text="Export to Excel"
+                            press="onExportToExcel"
+                            class="sapUiSmallMarginBegin"
+                        />
 
                         <HBox
-                            visible="{viewModel>/isAdmin}"
                             alignItems="Center"
                             justifyContent="End"
-                            class="sapUiSmallMarginTop sapUiSmallMarginEnd"
+                            class="sapUiSmallMarginBegin"
                         >
                             <Label
                                 text="Select Approver Level"
@@ -207,105 +218,140 @@
                                 </items>
                             </ComboBox>
                         </HBox>
-                    
+                    </HBox>
                 </HBox>
 
-                <ScrollContainer
-                    horizontal="true"
-                    vertical="false"
-                    height="auto"
-                    width="100%"
+                <Table
+                    id="requestTable"
+                    items="{tablereqmodel>/}"
+                    noDataText="{path: 'viewModel>/isAdmin', formatter: '.getNoDataText'}"
+                    mode="SingleSelectLeft"
+                    selectionChange="onTableSelectionChange"
                 >
-                    <Table
-                        id="requestTable"
-                        items="{tablereqmodel>/}"
-                        noDataText="{path: 'viewModel>/isAdmin', formatter: '.getNoDataText'}"
-                        mode="SingleSelectLeft"
-                        selectionChange="onTableSelectionChange"
-                    >
-                        <columns>
-                            <Column>
-                                <Text text="Title" />
-                            </Column>
-                            <Column
-                                demandPopin="true"
-                                minScreenWidth="Phone"
-                            >
-                                <Text text="Landscape" />
-                            </Column>
+                    <columns>
+                        <Column
+                            hAlign="Center"
+                            width="10%"
+                        >
+                            <Text text="Title" />
+                        </Column>
+                        <Column
+                            demandPopin="true"
+                            minScreenWidth="Phone"
+                            hAlign="Center"
+                        >
+                            <Text text="Landscape" />
+                        </Column>
 
-                            <Column>
-                                <Text text="Type" />
-                            </Column>
-                            <Column width="8%">
-                                <Text text="Approval System" />
-                            </Column>
-                            <Column>
-                                <Text text="Status" />
-                            </Column>
-                            <Column width="10%">
-                                <Text text="ReasonForRejection" />
-                            </Column>
-                            <Column>
-                                <Text text="Approver Level" />
-                            </Column>
-                            <Column>
-                                <Text text="Validation" />
-                            </Column>
-                            <Column visible="{viewModel>/isAdmin}">
-                                <Text text="Download" />
-                            </Column>
-                            <Column
-                                visible="{= ${viewModel>/isApprover} }"
-                                demandPopin="true"
-                                minScreenWidth="Desktop"
-                                width="20%"
-                                hAlign="Center"
-                            >
-                                <Text text="Action" />
-                            </Column>
-                        </columns>
-                        <items>
-                            <ColumnListItem
-                                type="Navigation"
-                                press="onRowPress"
-                            >
-                                <cells>
-                                    <Text text="{tablereqmodel>TITLE}" />
-                                    <Text text="{tablereqmodel>SYSTEM}" />
-                                    <Text text="{tablereqmodel>TYPE}" />
-                                    <Text
-                                        text="{tablereqmodel>APPROVERSYSTEM}"
-                                    />
-                                    <Text text="{tablereqmodel>STATUS}" />
-                                    <HBox
-                                        justifyContent="Center"
-                                        alignItems="Center"
-                                        visible="{path:'tablereqmodel>STATUS' ,formatter:'.isIconVisible'}"
-                                    >
-                                        <Button
-                                            icon="sap-icon://notes"
-                                            type="Transparent"
-                                            tooltip="Reason for reject"
-                                            press="onpressrejectnote"
-                                        />
-                                    </HBox>
-                                    <Text
-                                        text="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.getHighestLevel'}"
-                                    />
-                                    <!-- <Text text="{ApproverLevel}" /> -->
-                                    <Text
-                                        text="{tablereqmodel>VALIDATION}"
-                                        class="{path:'tablereqmodel>APPROVERLEVEL',formatter:'.getValidationClass'}"
-                                    />
+                        <Column hAlign="Center">
+                            <Text text="Type" />
+                        </Column>
+                        <Column
+                            width="8%"
+                            hAlign="Center"
+                        >
+                            <Text text="Approval System" />
+                        </Column>
+                        <Column hAlign="Center">
+                            <Text text="Status" />
+                        </Column>
+                        <Column
+                            width="5.5%"
+                            hAlign="Center"
+                        >
+                            <Text text="RejectionReason" />
+                        </Column>
+                        <Column hAlign="Center">
+                            <Text text="Approver Level" />
+                        </Column>
+                        <!-- <Column
+                            demandPopin="true"
+                            minScreenWidth="Desktop"
+                        >
+                            <Text text="Validation" />
+                        </Column> -->
+                        <Column
+                            visible="{viewModel>/isAdmin}"
+                            hAlign="Center"
+                        >
+                            <Text
+                                text="Download"
+                                wrapping="false"
+                                class="nowrapText"
+                            />
+                        </Column>
+                        <Column
+                            visible="{= ${viewModel>/isApprover} }"
+                            demandPopin="true"
+                            minScreenWidth="Desktop"
+                            width="18%"
+                            hAlign="Center"
+                        >
+                            <Text text="Action" />
+                        </Column>
+
+                        <Column hAlign="Center">
+                            <Text text="Commit ID" />
+                        </Column>
+                        <Column
+                            hAlign="Center"
+                            width="6%"
+                        >
+                            <Text text="Description" />
+                        </Column>
+                        <Column
+                            hAlign="Center"
+                            width="8%"
+                        >
+                            <Text text="CreatedDate" />
+                        </Column>
+
+                        <Column
+                            hAlign="Center"
+                            width="8%"
+                        >
+                            <Text text="Approved/Reject Date" />
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem
+                            type="Navigation"
+                            press="onRowPress"
+                        >
+                            <cells>
+                                <Text text="{tablereqmodel>TITLE}" />
+                                <Text text="{tablereqmodel>SYSTEM}" />
+                                <Text text="{tablereqmodel>TYPE}" />
+                                <Text text="{tablereqmodel>APPROVERSYSTEM}" />
+                                <ObjectStatus
+                                    text="{tablereqmodel>STATUS}"
+                                    state="{path:'tablereqmodel>STATUS', formatter: '.getValidationState'}"
+                                />
+                                <HBox
+                                    justifyContent="Center"
+                                    alignItems="Center"
+                                    visible="{path:'tablereqmodel>STATUS' ,formatter:'.isIconVisible'}"
+                                >
                                     <Button
-                                        icon="sap-icon://download"
-                                        press="ondownloadmtarfile"
+                                        icon="sap-icon://notes"
+                                        type="Transparent"
+                                        tooltip="Reason for reject"
+                                        press="onpressrejectnote"
                                     />
+                                </HBox>
+                                <Text
+                                    text="{path: 'tablereqmodel>APPROVERLEVEL', formatter: '.getHighestLevel'}"
+                                />
+                                <!-- <Text text="{ApproverLevel}" /> -->
+                                <!-- <Text text="{tablereqmodel>VALIDATION}" /> -->
+                                <Button
+                                    icon="sap-icon://download"
+                                    press="ondownloadmtarfile"
+                                />
 
-                                    <VBox width="100%">
-                                        <HBox
-                                            visible="{
+                                <VBox width="100%">
+                                    <HBox
+                                        visible="{
                                     parts: [
                                         'tablereqmodel>APPROVERLEVEL',
                                         'tablereqmodel>STATUS',
@@ -313,29 +359,29 @@
                                     ],
                                     formatter: '.isUserAllowedToApprove'
                                 }"
-                                        >
-                                            <Button
-                                                text="Approve"
-                                                type="Emphasized"
-                                                press="onApprove"
-                                            />
-                                            <Button
-                                                text="Reject"
-                                                type="Reject"
-                                                press="onReject"
-                                                class="sapUiSmallMarginBegin"
-                                            />
+                                    >
+                                        <Button
+                                            text="Approve"
+                                            type="Emphasized"
+                                            press="onApprove"
+                                        />
+                                        <Button
+                                            text="Reject"
+                                            type="Reject"
+                                            press="onReject"
+                                            class="sapUiTinyMarginBegin"
+                                        />
 
-                                            <Button
-                                                text="Not Applicable"
-                                                type="Emphasized"
-                                                press="onNotApplicable"
-                                                class="sapUiSmallMarginBegin"
-                                            />
-                                        </HBox>
+                                        <Button
+                                            text="Not Applicable"
+                                            type="Emphasized"
+                                            press="onNotApplicable"
+                                            class="sapUiTinyMarginBegin"
+                                        />
+                                    </HBox>
 
-                                        <Text
-                                            visible="{
+                                    <Text
+                                        visible="{
                                         parts: [
                                             'tablereqmodel>APPROVERLEVEL',
                                             'tablereqmodel>STATUS',
@@ -344,7 +390,7 @@
                                         ],
                                         formatter: '.isApprovedTextVisible'
                                     }"
-                                            text="{
+                                        text="{
                                         parts: [
                                             'tablereqmodel>APPROVERLEVEL',
                                             'tablereqmodel>STATUS',
@@ -353,13 +399,24 @@
                                         ],
                                         formatter: '.getApprovedText'
                                     }"
-                                        />
-                                    </VBox>
-                                </cells>
-                            </ColumnListItem>
-                        </items>
-                    </Table>
-                </ScrollContainer>
+                                    />
+                                </VBox>
+                                <Text text="{tablereqmodel>COMMITID}" />
+                                <Text
+                                    text="{tablereqmodel>DESCRIPTION}"
+                                    wrapping="false"
+                                    tooltip="{tablereqmodel>DESCRIPTION}"
+                                />
+                                <Text
+                                    text="{path: 'tablereqmodel>CREATEDAT', formatter: '.formatDateOnly'}"
+                                />
+                                <Text
+                                    text="{parts:['tablereqmodel>APPROVEDDATE','tablereqmodel>REJECTEDAT','tablereqmodel>STATUS'], formatter: '.formatDecisionDate'}"
+                                />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
             </VBox>
         </f:content>
     </f:DynamicPage>

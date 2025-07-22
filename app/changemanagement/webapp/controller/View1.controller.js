@@ -12,7 +12,7 @@ sap.ui.define([
             // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
             const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
             this.getView().setModel(viewModel, "viewModel");
-            const email = "sai@gmail.com";
+            const email = "admin@gmail.com";
             if (email === "admin@gmail.com") {
                 viewModel.setProperty("/isAdmin", true);
                 viewModel.setProperty("/userEmail", email);
@@ -107,12 +107,15 @@ sap.ui.define([
 
 
             var selectedData = {
-                ID:oData.ID,
+                ID: oData.ID,
                 Title: oData.TITLE || "",
                 System: oData.SYSTEM || "",
                 Type: oData.TYPE || "",
                 ApproverLevel: oData.APPROVERLEVEL || "",
-                ApproverSystem: oData.APPROVERSYSTEM || ""
+                ApproverSystem: oData.APPROVERSYSTEM || "",
+                Commitid:oData.COMMITID,
+                description: oData.DESCRIPTION,
+
             };
 
             // Set update mode
@@ -148,7 +151,9 @@ sap.ui.define([
                 System: "",
                 Type: "",
                 ApproverLevel: "",
-                ApproverSystem: ""
+                ApproverSystem: "",
+                Commitid: "",
+                description: "",
             });
 
             oView.setModel(oCreateModel, "CreateRequestModel");
@@ -247,7 +252,7 @@ sap.ui.define([
                     }
                 }.bind(this), error: function (err) {
                     sap.m.MessageToast.show(err.UpdateReqData
-                        
+
                     )
                 }
             })
@@ -331,6 +336,8 @@ sap.ui.define([
                 APPROVERSYSTEM: oData.ApproverSystem,
                 APPROVERLEVEL: approvallevel,
                 VALIDATION: validation,
+                COMMITID:oData.Commitid,
+                DESCRIPTION:oData.description,
                 CREATEDBY: email,
                 CREATEDAT: new Date().toISOString()
             };
@@ -440,12 +447,14 @@ sap.ui.define([
             const updatedLevel = levels.join(", ");
             const newStatus = levels.length === 0 ? "Approved" : "In Approval";
             const validation = levels.length === 0 ? "Passed" : "Not Started";
+            const approveddate = levels.length === 0 ? new Date().toISOString() : ""
 
             const updatedRequestdata = {
                 ID: oData.ID,
                 APPROVERLEVEL: updatedLevel,
                 STATUS: newStatus,
-                VALIDATION: validation
+                VALIDATION: validation,
+                APPROVEDDATE: approveddate
 
             };
             oModel.callFunction("/UpdateReqDataApprove", {
@@ -495,7 +504,7 @@ sap.ui.define([
                 },
                 success: function (odata) {
                     if (odata.UpdateReqDataApprove === "Change request updated successfully") {
-                        sap.m.MessageToast.show("Approved")
+                        sap.m.MessageToast.show("Not Applicable")
                         this.readrequestdata();
                     }
                 }.bind(this), error: function (err) {
@@ -624,21 +633,6 @@ sap.ui.define([
             });
         },
 
-
-        // this.getView().getModel().create("/ChangeRequests", newRequest, {
-        //     success: () => {
-        //         MessageToast.show("Request Created");
-        //         this.pDialog.close();
-        //     },
-        //     error: (err) => {
-        //         MessageBox.error("Error creating request");
-        //     }
-        // });
-        // getHighestLevel: function (approverLevel) {
-        //     if (!approverLevel) return "Approved ";
-        //     const levels = approverLevel.split(",").map(l => l.trim());
-        //     return levels[levels.length - 1];
-        // },
         getHighestLevel: function (approverLevel, status) {
             if (!approverLevel) return "";
 
@@ -664,28 +658,6 @@ sap.ui.define([
 
             return userLevel === currentLevel;
         },
-        // isUserAllowedToApprove: function (approverLevel, status, userLevel) {
-        //     if (!approverLevel || !userLevel || status !== "In Approval") return false;
-        //     const levels = approverLevel.split(",").map(s => s.trim());
-        //     const currentLevel = levels[levels.length - 1]; // currently needed approver
-        //     return userLevel === currentLevel;
-        // },
-
-        // isAlreadyApprovedForUser: function (approverLevel, status, userLevel) {
-        //     if (!approverLevel || !userLevel || status !== "In Approval") return false;
-
-        //     const levels = approverLevel.split(",").map(s => s.trim());
-
-        //     // If user level is NOT the current one, AND
-        //     // user's level appears after the last one in list => already approved
-        //     const allLevels = ["Level 1", "Level 2", "Level 3", "Level 4"];
-
-        //     const userIndex = allLevels.indexOf(userLevel);
-        //     const currentIndex = allLevels.indexOf(levels[levels.length - 1]);
-
-        //     return userIndex > currentIndex;
-        // }
-
         getApprovedText: function (approverLevel, status, userLevel, NotApplicable) {
             if (!approverLevel || !status || !userLevel) return "";
 
@@ -720,21 +692,35 @@ sap.ui.define([
             const isAdmin = viewModel.getProperty("/isAdmin");
             return isAdmin ? "Select any Approval level" : "No data available";
         },
-        getValidationClass: function (sValue) {
-            switch (sValue) {
-                case "Failed":
-                    return "customRed";
-                case "Passed":
-                    return "customGreen";
-                default:
-                    return "";
+        getValidationState: function (sValue) {
+            if (sValue === "Approved") return "Success";
+            if (sValue === "Rejected") return "Error";
+            if (sValue === "In Approval") return "Warning"
+            return "None";
+        },
+        formatDateOnly: function (sDateTime) {
+            if (!sDateTime) return "";
+            return sDateTime.split("T")[0];
+        },
+        formatDecisionDate: function (sApprovedDate, sRejectedDate, sStatus) {
+            if (!sStatus) return "";
+        
+            let sDate = "";
+        
+            if (sStatus === "Approved") {
+                sDate = sApprovedDate;
+            } else if (sStatus === "Rejected") {
+                sDate = sRejectedDate;
+            } else {
+                return ""; 
             }
+        
+            if (!sDate) return "";
+        
+            return sDate.split("T")[0];
+           
         }
-
-
-
-
-
+        
 
 
 

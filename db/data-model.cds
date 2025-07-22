@@ -11,6 +11,9 @@ context changemanagement {
         ApproverSystem : String(50);
         Validation     : String(50);
         NotApplicable  : String(50);
+        CommitID       : String(50);
+        Description    : String;
+        ApprovedDate   : Timestamp;
         createdBy      : String(100);
         createdAt      : Timestamp;
 
@@ -59,6 +62,9 @@ entity ChangeRequestView {
       NotApplicable    : String;
       CREATEDBY        : String;
       CREATEDAT        : Timestamp;
+      CommitID         : String(50);
+      Description      : String;
+      ApprovedDate     : Timestamp;
       REJECTEDBY       : String;
       REJECTIONCOMMENT : String;
       REJECTEDLEVEL    : String;

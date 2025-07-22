@@ -1,10 +1,15 @@
-.customRed {
-    color: red !important;
-    font-weight: bold;
-  }
-  
-  .customGreen {
-    color: green !important;
-    font-weight: bold;
-  }
-  
+.textred {
+  color: red;
+  font-weight: bold;
+}
+
+.textgreen {
+  color: green;
+  font-weight: bold;
+}
+
+.nowrapText {
+  word-break: break-word;
+  /* or use normal if needed */
+  white-space: normal;
+}
