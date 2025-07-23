@@ -6,9 +6,11 @@ sap.ui.define([
     "sap/m/MessageBox",
 ], (Controller, JSONModel, Fragment, MessageToast, MessageBox) => {
     "use strict";
+    var that = this;
 
     return Controller.extend("com.changemanagement.controller.View1", {
         onInit() {
+
             // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
             const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
             this.getView().setModel(viewModel, "viewModel");
@@ -113,7 +115,7 @@ sap.ui.define([
                 Type: oData.TYPE || "",
                 ApproverLevel: oData.APPROVERLEVEL || "",
                 ApproverSystem: oData.APPROVERSYSTEM || "",
-                Commitid:oData.COMMITID,
+                Commitid: oData.COMMITID,
                 description: oData.DESCRIPTION,
 
             };
@@ -213,9 +215,66 @@ sap.ui.define([
             });
         },
 
+        onFileUploadChange: async function (oEvent) {
+            var oFileUploader = this.byId("fileUploader");
+            this.oFile = oEvent.getParameter("files")[0]; // First file selected
 
+            // if (!oFile) {
+            //     MessageToast.show("Please choose a file.");
+            //     return;
+            // }
 
-        onFileUploadChange: function (oEvent) {
+            // try {
+            //     const id = await this._createEntity(oFile);
+            //     await this._uploadContent(oFile, id);
+            //     MessageToast.show("File uploaded successfully.");
+            // } catch (err) {
+            //     console.error("Upload failed", err);
+            //     MessageToast.show("Upload failed.");
+            // }
+        },
+        _createEntity: function (file, uniqueID) {
+            var data = {
+                mediaType: file.type,
+                fileName: file.name,
+                size: file.size,
+                changeReq: {
+                    ID: String(uniqueID) 
+                }
+            };
+
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: "/v2/odata/v4/change-management/MediaFile",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(data),
+                    success: function (result) {
+                        resolve(result.d.ID); // Adjust according to response
+                    },
+                    error: function (err) {
+                        reject(err);
+                    }
+                });
+            });
+        },
+        _uploadContent: function (file, id) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append("file", file); // or just `formData.append(file.name, file)` if needed
+
+                fetch(`/v2/odata/v4/change-management/MediaFile(${id})/content`, {
+                    method: "PUT",
+                    body: formData
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error("Upload failed");
+                        resolve();
+                    })
+                    .catch(err => reject(err));
+            });
+        },
+        onFileUploadChanges: function (oEvent) {
             var file = oEvent.getParameter("files")[0];
             this.uploadedFile = file;
             var reader = new FileReader();
@@ -260,26 +319,6 @@ sap.ui.define([
         },
 
         createChangeRequest: async function () {
-            const oFile = this.uploadedFile;
-
-            let ATTACHMENTNAME = "";
-            let ATTACHMENTTYPE = "";
-            let ATTACHMENTCONTENT = "";
-            let hasFile = false;
-
-            if (oFile) {
-                try {
-                    ATTACHMENTNAME = oFile.name;
-                    ATTACHMENTTYPE = oFile.type || "application/x-mtar";
-                    ATTACHMENTCONTENT = this.base64Content;
-                    hasFile = true;
-                } catch (err) {
-                    console.error(err);
-                    MessageBox.error("File processing failed.");
-                    return;
-                }
-            }
-
             const oModel = this.getOwnerComponent().getModel();
             const oCreateModel = this.getView().getModel("CreateRequestModel");
             const oData = oCreateModel.getData();
@@ -336,41 +375,42 @@ sap.ui.define([
                 APPROVERSYSTEM: oData.ApproverSystem,
                 APPROVERLEVEL: approvallevel,
                 VALIDATION: validation,
-                COMMITID:oData.Commitid,
-                DESCRIPTION:oData.description,
+                COMMITID: oData.Commitid,
+                DESCRIPTION: oData.description,
                 CREATEDBY: email,
                 CREATEDAT: new Date().toISOString()
             };
 
-            let urlParameters = {
+            const urlParameters = {
                 requestdata: JSON.stringify(newRequest)
             };
-
-            if (hasFile) {
-                const filePayload = {
-                    ID_ID: String(uniqueID),
-                    FILENAME: ATTACHMENTNAME,
-                    MEDIATYPE: ATTACHMENTTYPE,
-                    CONTENT: ATTACHMENTCONTENT
-                };
-                urlParameters.filedata = JSON.stringify(filePayload);
-            }
 
             oModel.callFunction("/CreateRequest", {
                 method: "POST",
                 urlParameters: urlParameters,
-                success: function (oData) {
+                success: async function (oData) {
                     try {
                         if (!oData.CreateRequest) {
                             MessageToast.show("Request was not created.");
                             return;
                         }
+
+                        // Check for file and upload if exists
+
+                        const oFile = this.oFile;
+
+                        if (oFile) {
+                            const id = await this._createEntity(oFile, uniqueID);
+                            await this._uploadContent(oFile, id);
+                            MessageToast.show("File uploaded successfully.");
+                        }
+
                         MessageToast.show(oData.CreateRequest);
                         this.pDialog.close();
                         this.readrequestdata();
                         oModel.refresh(true);
                     } catch (error) {
-                        MessageBox.show(error.message || error);
+                        MessageBox.show("Upload or request processing failed: " + error.message);
                     }
                 }.bind(this),
                 error: function (err) {
@@ -704,23 +744,23 @@ sap.ui.define([
         },
         formatDecisionDate: function (sApprovedDate, sRejectedDate, sStatus) {
             if (!sStatus) return "";
-        
+
             let sDate = "";
-        
+
             if (sStatus === "Approved") {
                 sDate = sApprovedDate;
             } else if (sStatus === "Rejected") {
                 sDate = sRejectedDate;
             } else {
-                return ""; 
+                return "";
             }
-        
+
             if (!sDate) return "";
-        
+
             return sDate.split("T")[0];
-           
+
         }
-        
+
 
 
 

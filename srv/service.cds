@@ -3,9 +3,9 @@ using {ChangeRequestView} from '../db/data-model';
 
 
 service ChangeManagementService {
-  entity ChangeRequests    as projection on changemanagement.ChangeRequests;
   entity MediaFile         as projection on changemanagement.MediaFile;
-  entity Approvers         as projection on changemanagement.Approvers;
+  entity ChangeRequests    as projection on changemanagement.ChangeRequests;
+   entity Approvers         as projection on changemanagement.Approvers;
   entity RejectionLog      as projection on changemanagement.RejectionLog;
   entity ChangeRequestview as projection on ChangeRequestView;
   action   approveRequest(ID : UUID)                              returns String;

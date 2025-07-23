@@ -19,17 +19,17 @@ context changemanagement {
 
   }
 
+ @cds.server.body_parser.limit: '10mb'
   entity MediaFile {
-    key id        : Association to ChangeRequests;
+  key ID        : UUID;
+      content   : LargeBinary @Core.MediaType : mediaType;
+      mediaType : String    @Core.IsMediaType : true;
+      fileName  : String;
+      url       : String;
+      size      : Integer;
+      changeReq : Association to ChangeRequests;
+}
 
-        @Core.MediaType  : mediaType
-        content   : LargeBinary;
-
-        @Core.IsMediaType: true
-        mediaType : String;
-        fileName  : String;
-        url       : String;
-  };
 
   entity Approvers {
     key ID    : UUID;

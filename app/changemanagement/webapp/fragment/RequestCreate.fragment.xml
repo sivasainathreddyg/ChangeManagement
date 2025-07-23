@@ -137,7 +137,7 @@
                 width="100%"
                 id="fileUploader"
                 name="mtarFile"
-                fileType="mtar"
+                fileType="mtar,pdf,doc,docx"
                 placeholder="Choose a .mtar file"
                 change="onFileUploadChange"
                 visible="{= ${viewModel>/mode} === 'Create'}"
