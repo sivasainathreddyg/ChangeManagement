@@ -14,7 +14,7 @@ sap.ui.define([
             // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
             const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
             this.getView().setModel(viewModel, "viewModel");
-            const email = "pavan@gmail.com";
+            const email = "admin@gmail.com";
             if (email === "admin@gmail.com") {
                 viewModel.setProperty("/isAdmin", true);
                 viewModel.setProperty("/userEmail", email);
@@ -65,11 +65,11 @@ sap.ui.define([
                     oView.addDependent(oDialog);
                     this.pDialog = oDialog;
                     this.pDialog.open();
-                    // sap.ui.getCore().byId("fileUploader").setValue("");
+                    sap.ui.getCore().byId("fileUploader").setValue("");
                 }.bind(this));
             } else {
                 this.pDialog.open();
-                // sap.ui.getCore().byId("fileUploader").setValue("");
+                sap.ui.getCore().byId("fileUploader").setValue("");
             }
         },
         onTableSelectionChange: function (oEvent) {
@@ -201,19 +201,19 @@ sap.ui.define([
             // var oFileUploader = this.byId("fileUploader");
             this.oFile = oEvent.getParameter("files")[0]; // First file selected
 
-            // if (!oFile) {
-            //     MessageToast.show("Please choose a file.");
-            //     return;
-            // }
+            if (this.oFile) {
+                const allowedExtensions = ["pdf", "doc", "mtar"];
+                const fileName = this.oFile.name.toLowerCase();
+                const fileExtension = fileName.split(".").pop();
 
-            // try {
-            //     const id = await this._createEntity(oFile);
-            //     await this._uploadContent(oFile, id);
-            //     MessageToast.show("File uploaded successfully.");
-            // } catch (err) {
-            //     console.error("Upload failed", err);
-            //     MessageToast.show("Upload failed.");
-            // }
+                if (!allowedExtensions.includes(fileExtension)) {
+                    MessageToast.show("Only PDF, DOC, or MTAR files are allowed.");
+                    this.oFile = null; // Clear the file so it's not uploaded accidentally
+                    return;
+                }
+            }
+
+
         },
         createEntity: function (file, uniqueID) {
             var data = {
@@ -256,17 +256,17 @@ sap.ui.define([
                     .catch(err => reject(err));
             });
         },
-        onFileUploadChanges: function (oEvent) {
-            var file = oEvent.getParameter("files")[0];
-            this.uploadedFile = file;
-            var reader = new FileReader();
-            reader.onload = function (oEvent) {
-                var base64String = oEvent.currentTarget.result.split(',')[1];
-                this.base64Content = base64String;
-                // this.createfile();
-            }.bind(this);
-            reader.readAsDataURL(this.uploadedFile);
-        },
+        // onFileUploadChanges: function (oEvent) {
+        //     var file = oEvent.getParameter("files")[0];
+        //     this.uploadedFile = file;
+        //     var reader = new FileReader();
+        //     reader.onload = function (oEvent) {
+        //         var base64String = oEvent.currentTarget.result.split(',')[1];
+        //         this.base64Content = base64String;
+        //         // this.createfile();
+        //     }.bind(this);
+        //     reader.readAsDataURL(this.uploadedFile);
+        // },
         onDialogSubmit: function () {
             var oViewModel = this.getView().getModel("viewModel");
             var sMode = oViewModel.getProperty("/mode");
@@ -414,7 +414,19 @@ sap.ui.define([
                 }
             });
         },
+        deleteRequest: function (uniqueID) {
+            const oModel = this.getOwnerComponent().getModel();
+            oModel.callFunction("/Deletereqdata", {
+                method: "GET",
+                urlParameters: { ID: uniqueID },
+                success: function (odata) {
 
+                }, error: function (odata) {
+
+                }
+            })
+
+        },
         ondownloadFile: async function (oEvent) {
             that.busyDialog = new sap.m.BusyDialog();
             that.busyDialog.open();
@@ -431,6 +443,7 @@ sap.ui.define([
 
                 if (!metadataResponse.ok) {
                     throw new Error("Failed to fetch media file metadata.");
+
                 }
 
                 const metaData = await metadataResponse.json();
@@ -438,7 +451,9 @@ sap.ui.define([
 
                 if (!results.length) {
                     MessageBox.warning("No attachment found for this request.");
+                    that.busyDialog.close();
                     return;
+
                 }
 
                 const mediaFile = results[0];
@@ -451,6 +466,7 @@ sap.ui.define([
                 const response = await fetch(sDownloadUrl);
                 if (!response.ok) {
                     throw new Error("Download failed.");
+
                 }
 
                 const blob = await response.blob();
@@ -476,7 +492,7 @@ sap.ui.define([
                     } else if ("mtar" === results[0].fileName.split('.')[1]) {
                         fileName += ".mtar";
                     } else {
-                        fileName += ".results[0].fileName.split('.')[1]";
+                        fileName += ".mtar";
                     }
                 }
 

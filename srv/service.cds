@@ -22,5 +22,6 @@ service ChangeManagementService {
   function FilterOperator(filterdata : String)                returns String;
   function UpdateReqData(updateddata : String)                returns String;
   function exportFilterData(startDate : Date, endDate : Date) returns String;
+  function Deletereqdata(ID : String)                         returns String;
 
 }

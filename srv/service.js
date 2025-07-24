@@ -300,22 +300,22 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
-    this.on("exportFilterData",async(req)=>{
+    this.on("exportFilterData", async (req) => {
         try {
             const { startDate, endDate } = req.data;
-    
+
             const from = new Date(startDate);
             const to = new Date(endDate);
-    
+
             // Strip time and set full-day range
             const fromDate = from.toISOString().slice(0, 19);
-            const toDate = to.toISOString().slice(0, 19); 
+            const toDate = to.toISOString().slice(0, 19);
             const results = await cds.run(
                 SELECT.from("CHANGEMANAGEMENTSERVICE_CHANGEREQUESTVIEW").where`
                    CREATEDAT  >= ${fromDate} and 
                     CREATEDAT  <= ${toDate}`
             );
-    
+
             return { value: JSON.stringify(results) };
         } catch (error) {
             console.error("Export Filter Error:", error);
@@ -339,6 +339,17 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+    this.on("Deletereqdata", async (req) => {
+        try {
+            const requestId = req.data.ID;
+            await cds.transaction(req).run(DELETE.from("CHANGEMANAGEMENT_CHANGEREQUESTS").where({ ID: requestId }))
+            return "delete sucessfully"
+        } catch (err) {
+            console.error("Error reading rejection log:", err);
+            req.error(500, "Failed to fetch rejection log");
+        }
+    })
+
     /**
      * UpdateReqDataApprove handler
      */
@@ -351,10 +362,10 @@ module.exports = cds.service.impl(async function () {
                 APPROVERLEVEL: updatedata.APPROVERLEVEL,
                 STATUS: updatedata.STATUS,
                 VALIDATION: updatedata.VALIDATION,
-                
+
             };
-            if(updatedata.APPROVEDDATE){
-                updatePayload.APPROVEDDATE= updatedata.APPROVEDDATE
+            if (updatedata.APPROVEDDATE) {
+                updatePayload.APPROVEDDATE = updatedata.APPROVEDDATE
             }
 
             if (updatedata.NOTAPPLICABLE) {
