@@ -14,7 +14,7 @@ sap.ui.define([
             // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
             const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
             this.getView().setModel(viewModel, "viewModel");
-            const email = "admin@gmail.com";
+            const email = "pavan@gmail.com";
             if (email === "admin@gmail.com") {
                 viewModel.setProperty("/isAdmin", true);
                 viewModel.setProperty("/userEmail", email);
@@ -47,24 +47,12 @@ sap.ui.define([
 
 
         },
-        // onInit: function () {
-        //     const viewModel = new JSONModel({ userEmail: "", userLevel: "", isApprover: false });
-        //     this.getView().setModel(viewModel, "viewModel");
-
-        //     const email = sap.ushell.Container.getUser().getEmail();
-        //     viewModel.setProperty("/userEmail", email);
-
-        //     const oModel = this.getView().getModel();
-        //     oModel.read("/Approvers", {
-        //         filters: [new sap.ui.model.Filter("Email", "EQ", email)],
-        //         success: (data) => {
-        //             if (data.results.length > 0) {
-        //                 viewModel.setProperty("/userLevel", data.results[0].Level);
-        //                 viewModel.setProperty("/isApprover", true);
-        //             }
-        //         }
-        //     });
-        // }
+        onThemeSwitch: function (oEvent) {
+            const bIsDark = oEvent.getParameter("state");
+            const newTheme = bIsDark ? "sap_horizon_dark" : "sap_horizon";
+            sap.ui.getCore().applyTheme(newTheme);
+            // localStorage.setItem("selectedTheme", newTheme); // Optional: persist selection
+        },
 
         opencreaterequestProjectDialog: function () {
             var oView = this.getView();
@@ -119,16 +107,11 @@ sap.ui.define([
                 description: oData.DESCRIPTION,
 
             };
-
-            // Set update mode
             var oViewModel = this.getView().getModel("viewModel");
             oViewModel.setProperty("/mode", "Update");
-
-            // Set model with selected data
             var oCreateModel = new JSONModel(selectedData);
             this.getView().setModel(oCreateModel, "CreateRequestModel");
 
-            // Open fragment
             if (!this.pDialog) {
                 this.pDialog = sap.ui.xmlfragment(
                     this.getView().getId(),
@@ -147,7 +130,6 @@ sap.ui.define([
         onCreateRequest: function () {
             const oView = this.getView();
 
-            // Create and set data model
             const oCreateModel = new sap.ui.model.json.JSONModel({
                 Title: "",
                 System: "",
@@ -162,7 +144,7 @@ sap.ui.define([
             var oViewModel = this.getView().getModel("viewModel");
             oViewModel.setProperty("/mode", "Create");
             this.opencreaterequestProjectDialog();
-            // sap.ui.getCore().byId("fileUploader").setValue("");
+
         },
         onApproverLevelChange: function (oEvent) {
             var SelectedLevel = oEvent.getSource().getSelectedKey();
@@ -216,7 +198,7 @@ sap.ui.define([
         },
 
         onFileUploadChange: async function (oEvent) {
-            var oFileUploader = this.byId("fileUploader");
+            // var oFileUploader = this.byId("fileUploader");
             this.oFile = oEvent.getParameter("files")[0]; // First file selected
 
             // if (!oFile) {
@@ -233,7 +215,7 @@ sap.ui.define([
             //     MessageToast.show("Upload failed.");
             // }
         },
-        _createEntity: function (file, uniqueID) {
+        createEntity: function (file, uniqueID) {
             var data = {
                 mediaType: file.type,
                 fileName: file.name,
@@ -250,7 +232,7 @@ sap.ui.define([
                     contentType: "application/json",
                     data: JSON.stringify(data),
                     success: function (result) {
-                        resolve(result.d.ID); // Adjust according to response
+                        resolve(result.d.ID);
                     },
                     error: function (err) {
                         reject(err);
@@ -258,10 +240,10 @@ sap.ui.define([
                 });
             });
         },
-        _uploadContent: function (file, id) {
+        uploadContent: function (file, id) {
             return new Promise((resolve, reject) => {
                 const formData = new FormData();
-                formData.append("file", file); // or just `formData.append(file.name, file)` if needed
+                formData.append("file", file);
 
                 fetch(`/v2/odata/v4/change-management/MediaFile(${id})/content`, {
                     method: "PUT",
@@ -403,11 +385,11 @@ sap.ui.define([
 
                         if (oFile) {
                             try {
-                                const id = await this._createEntity(oFile, uniqueID);
-                                await this._uploadContent(oFile, id);
+                                const id = await this.createEntity(oFile, uniqueID);
+                                await this.uploadContent(oFile, id);
                             } catch (uploadError) {
                                 uploadSuccess = false;
-                                await this._deleteRequest(uniqueID);
+                                await this.deleteRequest(uniqueID);
 
                                 MessageBox.error("File upload failed. Request was rolled back.");
                                 that.busyDialog.close();
@@ -439,7 +421,7 @@ sap.ui.define([
 
             const oContext = oEvent.getSource().getBindingContext("tablereqmodel");
             const oData = oContext.getObject();
-            const sRequestID = oData.ID; // Assuming this is your change request ID
+            const sRequestID = oData.ID;
 
             const sServiceUrl = "/v2/odata/v4/change-management";
 
@@ -737,7 +719,7 @@ sap.ui.define([
                 method: "GET",
                 urlParameters: { startDate: FromDate, endDate: ToDate },
                 success: function (odata) {
-                    that.handleExcelExport(odata.exportFilterData); 
+                    that.handleExcelExport(odata.exportFilterData);
                 },
                 error: function (err) {
                     sap.m.MessageBox.error("Failed to load request data.");
@@ -874,11 +856,6 @@ sap.ui.define([
         isVisibleForAdminCreate: function (isAdmin, mode) {
             return isAdmin && mode === "Create";
         }
-
-
-
-
-
 
 
     });

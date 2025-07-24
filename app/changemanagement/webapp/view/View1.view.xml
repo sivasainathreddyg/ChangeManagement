@@ -19,6 +19,13 @@
                     />
                 </f:heading>
                 <f:actions>
+                    <Label text="Dark Mode:" />
+                    <Switch
+                        state="false"
+                        change=".onThemeSwitch"
+                        tooltip="Toggle Dark/Light Theme"
+                    />
+
                     <Button
                         text="Create Request"
                         type="Emphasized"
@@ -50,7 +57,7 @@
                 >
                     <!-- All your filter VBox items go here -->
                     <HBox>
-                        <VBox class="sapUiSmallMarginEnd">
+                        <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBegin">
                             <Label text="System" />
                             <Select
                                 id="systemFilter"
@@ -256,12 +263,12 @@
                         <Column hAlign="Center">
                             <Text text="Status" />
                         </Column>
-                        <Column
+                        <!-- <Column
                             width="5.5%"
                             hAlign="Center"
                         >
-                            <Text text="RejectionReason" />
-                        </Column>
+                            <Text text="RejectionReason" /> -->
+                        <!-- </Column> -->
                         <Column hAlign="Center">
                             <Text text="Approver Level" />
                         </Column>
@@ -324,20 +331,21 @@
                                 <Text text="{tablereqmodel>SYSTEM}" />
                                 <Text text="{tablereqmodel>TYPE}" />
                                 <Text text="{tablereqmodel>APPROVERSYSTEM}" />
-                                <ObjectStatus
-                                    text="{tablereqmodel>STATUS}"
-                                    state="{path:'tablereqmodel>STATUS', formatter: '.getValidationState'}"
-                                />
+
                                 <HBox
                                     justifyContent="Center"
                                     alignItems="Center"
-                                    visible="{path:'tablereqmodel>STATUS' ,formatter:'.isIconVisible'}"
                                 >
+                                    <ObjectStatus
+                                        text="{tablereqmodel>STATUS}"
+                                        state="{path:'tablereqmodel>STATUS', formatter: '.getValidationState'}"
+                                    />
                                     <Button
                                         icon="sap-icon://notes"
                                         type="Transparent"
                                         tooltip="Reason for reject"
                                         press="onpressrejectnote"
+                                        visible="{path:'tablereqmodel>STATUS' ,formatter:'.isIconVisible'}"
                                     />
                                 </HBox>
                                 <Text
