@@ -229,44 +229,37 @@ module.exports = cds.service.impl(async function () {
         req.data.ID = id;
         req.data.url = `/v2/odata/v4/change-management/MediaFile(${id})/content`;
     });
-    
+
 
     this.before('READ', 'Files', req => {
         //check content-type
         console.log('content-type: ', req.headers['content-type'])
     })
 
+
     this.on("CreateRequest", async (req) => {
         const db = cds.transaction(req);
 
         try {
-            const { requestdata, filedata } = req.data || {};
+            if (!req.data || !req.data.requestdata) {
+                return { error: "Missing Request data" };
+            }
 
-            if (!requestdata) return "Missing request data";
-
-            let requestData, fileData;
+            let newcreaterequestdata;
             try {
-                requestData = JSON.parse(requestdata);
-                if (filedata) fileData = JSON.parse(filedata);
-            } catch (e) {
-                console.error("Invalid JSON input:", e);
-                return "Invalid JSON format in request or file data";
+                newcreaterequestdata = JSON.parse(req.data.requestdata);
+            } catch (error) {
+                return { error: "Invalid Request data format" };
             }
 
-            await db.run(INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(requestData));
+            await cds.transaction(req).run(
+                INSERT.into("CHANGEMANAGEMENT_CHANGEREQUESTS").entries(newcreaterequestdata)
+            );
 
-            if (fileData?.CONTENT) {
-                if (typeof fileData.CONTENT === "string") {
-                    fileData.CONTENT = Buffer.from(fileData.CONTENT, "base64");
-                }
-
-                await db.run(INSERT.into("CHANGEMANAGEMENT_MEDIAFILE").entries(fileData));
-            }
-
-            return "Request created successfully" + (fileData ? " with attachment." : " without attachment.");
-        } catch (err) {
-            console.error("Transaction failed and rolled back:", err);
-            return "Failed to create request or file. Transaction rolled back.";
+            return { value: "Request data created successfully" };
+        } catch (error) {
+            console.error("Error creating Request:", error);
+            return { error: "Failed to create Request" };
         }
     });
 
@@ -307,6 +300,29 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+    this.on("exportFilterData",async(req)=>{
+        try {
+            const { startDate, endDate } = req.data;
+    
+            const from = new Date(startDate);
+            const to = new Date(endDate);
+    
+            // Strip time and set full-day range
+            const fromDate = from.toISOString().slice(0, 19);
+            const toDate = to.toISOString().slice(0, 19); 
+            const results = await cds.run(
+                SELECT.from("CHANGEMANAGEMENTSERVICE_CHANGEREQUESTVIEW").where`
+                   CREATEDAT  >= ${fromDate} and 
+                    CREATEDAT  <= ${toDate}`
+            );
+    
+            return { value: JSON.stringify(results) };
+        } catch (error) {
+            console.error("Export Filter Error:", error);
+            return req.error(500, "Failed to export filtered data.");
+        }
+    })
+
     /**
      * Rejectionnote handler
      */
@@ -335,8 +351,11 @@ module.exports = cds.service.impl(async function () {
                 APPROVERLEVEL: updatedata.APPROVERLEVEL,
                 STATUS: updatedata.STATUS,
                 VALIDATION: updatedata.VALIDATION,
-                APPROVEDDATE: updatedata.APPROVEDDATE
+                
             };
+            if(updatedata.APPROVEDDATE){
+                updatePayload.APPROVEDDATE= updatedata.APPROVEDDATE
+            }
 
             if (updatedata.NOTAPPLICABLE) {
                 updatePayload.NOTAPPLICABLE = updatedata.NOTAPPLICABLE;

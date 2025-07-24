@@ -77,11 +77,11 @@ sap.ui.define([
                     oView.addDependent(oDialog);
                     this.pDialog = oDialog;
                     this.pDialog.open();
-                    sap.ui.getCore().byId("fileUploader").setValue("");
+                    // sap.ui.getCore().byId("fileUploader").setValue("");
                 }.bind(this));
             } else {
                 this.pDialog.open();
-                sap.ui.getCore().byId("fileUploader").setValue("");
+                // sap.ui.getCore().byId("fileUploader").setValue("");
             }
         },
         onTableSelectionChange: function (oEvent) {
@@ -239,7 +239,7 @@ sap.ui.define([
                 fileName: file.name,
                 size: file.size,
                 changeReq: {
-                    ID: String(uniqueID) 
+                    ID: String(uniqueID)
                 }
             };
 
@@ -306,23 +306,23 @@ sap.ui.define([
                 urlParameters: { updateddata: JSON.stringify(oData) },
                 success: function (odata) {
                     if (odata.UpdateReqData === "Change request updated successfully") {
-                        sap.m.MessageToast.show("Approved")
+                        sap.m.MessageToast.show("Updated ")
                         this.readrequestdata();
                     }
                 }.bind(this), error: function (err) {
-                    sap.m.MessageToast.show(err.UpdateReqData
-
-                    )
+                    sap.m.MessageToast.show(err.UpdateReqData)
                 }
             })
 
         },
 
         createChangeRequest: async function () {
+            that.busyDialog = new sap.m.BusyDialog();
+            that.busyDialog.open();
             const oModel = this.getOwnerComponent().getModel();
             const oCreateModel = this.getView().getModel("CreateRequestModel");
             const oData = oCreateModel.getData();
-            const requiredFields = ["Title", "System", "Type", "ApproverSystem"];
+            const requiredFields = ["Title", "System", "Type", "ApproverSystem", "Commitid", "description"];
 
             const isValid = requiredFields.every(field => oData[field]);
             if (!isValid) {
@@ -381,13 +381,13 @@ sap.ui.define([
                 CREATEDAT: new Date().toISOString()
             };
 
-            const urlParameters = {
-                requestdata: JSON.stringify(newRequest)
-            };
+            // const urlParameters = {
+            //     requestdata: JSON.stringify(newRequest)
+            // };
 
             oModel.callFunction("/CreateRequest", {
                 method: "POST",
-                urlParameters: urlParameters,
+                urlParameters: { requestdata: JSON.stringify(newRequest) },
                 success: async function (oData) {
                     try {
                         if (!oData.CreateRequest) {
@@ -398,66 +398,107 @@ sap.ui.define([
                         // Check for file and upload if exists
 
                         const oFile = this.oFile;
+                        let uploadSuccess = true;
+
 
                         if (oFile) {
-                            const id = await this._createEntity(oFile, uniqueID);
-                            await this._uploadContent(oFile, id);
-                            MessageToast.show("File uploaded successfully.");
+                            try {
+                                const id = await this._createEntity(oFile, uniqueID);
+                                await this._uploadContent(oFile, id);
+                            } catch (uploadError) {
+                                uploadSuccess = false;
+                                await this._deleteRequest(uniqueID);
+
+                                MessageBox.error("File upload failed. Request was rolled back.");
+                                that.busyDialog.close();
+                                return;
+                            }
                         }
 
-                        MessageToast.show(oData.CreateRequest);
-                        this.pDialog.close();
-                        this.readrequestdata();
-                        oModel.refresh(true);
+                        if (uploadSuccess) {
+                            MessageToast.show("Request created successfully with file.");
+                            this.pDialog.close();
+                            this.readrequestdata();
+                            that.busyDialog.close();
+                        }
                     } catch (error) {
                         MessageBox.show("Upload or request processing failed: " + error.message);
+                        that.busyDialog.close();
                     }
                 }.bind(this),
                 error: function (err) {
                     MessageBox.show("Error while creating request: " + err.message);
+                    that.busyDialog.close();
                 }
             });
         },
 
-        ondownloadmtarfile: async function (oEvent) {
+        ondownloadFile: async function (oEvent) {
+            that.busyDialog = new sap.m.BusyDialog();
+            that.busyDialog.open();
+
             const oContext = oEvent.getSource().getBindingContext("tablereqmodel");
             const oData = oContext.getObject();
-            const sId = oData.ID;
+            const sRequestID = oData.ID; // Assuming this is your change request ID
 
             const sServiceUrl = "/v2/odata/v4/change-management";
-            const sDownloadUrl = `${sServiceUrl}/MediaFile('${sId}')/content`;
 
             try {
+                // Step 1: Get the MediaFile entry using filter by changeReq_ID
+                const metadataResponse = await fetch(`${sServiceUrl}/MediaFile?$filter=changeReq_ID eq '${sRequestID}'`);
 
-                const metaResponse = await fetch(`${sServiceUrl}/MediaFile('${sId}')`);
+                if (!metadataResponse.ok) {
+                    throw new Error("Failed to fetch media file metadata.");
+                }
 
-                if (metaResponse.status === 404) {
+                const metaData = await metadataResponse.json();
+                const results = metaData.d.results;
+
+                if (!results.length) {
                     MessageBox.warning("No attachment found for this request.");
                     return;
                 }
 
-                if (!metaResponse.ok) {
-                    throw new Error("Failed to check file existence.");
-                }
+                const mediaFile = results[0];
+                const sMediaId = mediaFile.ID;
 
+                // Step 2: Build the download URL using the media file ID
+                const sDownloadUrl = `${sServiceUrl}/MediaFile('${sMediaId}')/content`;
 
+                // Step 3: Download the file
                 const response = await fetch(sDownloadUrl);
-
                 if (!response.ok) {
-                    throw new Error("Download failed");
+                    throw new Error("Download failed.");
                 }
-
 
                 const blob = await response.blob();
+                const contentType = response.headers.get("Content-Type") || "application/octet-stream";
+                // Extract filename from response header
+                // let fileName = `file_${sMediaId}`;
+                // const disposition = response.headers.get("Content-Disposition");
+                // if (disposition && disposition.includes("filename=")) {
+                //     fileName = disposition.split("filename=")[1].replace(/"/g, "");
+                // }
 
-
-                let fileName = `file_${sId}.mtar`;
+                let fileName = `file_${sMediaId}`;
                 const disposition = response.headers.get("Content-Disposition");
-                if (disposition && disposition.indexOf("filename=") !== -1) {
-                    fileName = disposition.split("filename=")[1].replace(/"/g, "");
+                if (disposition && disposition.includes("filename=")) {
+                    const parts = disposition.split("filename=");
+                    fileName = parts[1].replace(/['"]/g, "").trim();
+                } else {
+                    // Default extension fallback
+                    if (contentType === "application/pdf") {
+                        fileName += ".pdf";
+                    } else if (contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                        fileName += ".docx";
+                    } else if ("mtar" === results[0].fileName.split('.')[1]) {
+                        fileName += ".mtar";
+                    } else {
+                        fileName += ".results[0].fileName.split('.')[1]";
+                    }
                 }
 
-                // Create a link and trigger the download
+                // Trigger browser download
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
@@ -466,9 +507,11 @@ sap.ui.define([
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
+                that.busyDialog.close();
 
             } catch (err) {
                 MessageBox.error("Error downloading file: " + err.message);
+                that.busyDialog.close();
             }
         },
         onApprove: function (oEvent) {
@@ -487,16 +530,17 @@ sap.ui.define([
             const updatedLevel = levels.join(", ");
             const newStatus = levels.length === 0 ? "Approved" : "In Approval";
             const validation = levels.length === 0 ? "Passed" : "Not Started";
-            const approveddate = levels.length === 0 ? new Date().toISOString() : ""
-
             const updatedRequestdata = {
                 ID: oData.ID,
                 APPROVERLEVEL: updatedLevel,
                 STATUS: newStatus,
                 VALIDATION: validation,
-                APPROVEDDATE: approveddate
 
             };
+            if (levels.length === 0) {
+                const approveddate = new Date().toISOString();
+                updatedRequestdata.APPROVEDDATE = approveddate;
+            }
             oModel.callFunction("/UpdateReqDataApprove", {
                 method: "GET",
                 urlParameters: {
@@ -672,6 +716,73 @@ sap.ui.define([
                 }
             });
         },
+        onDateRangeChange: function (oEvent) {
+            const oViewModel = this.getView().getModel("viewModel");
+            const oDateRange = oEvent.getSource();
+            const oFromDate = oDateRange.getDateValue();
+            const oToDate = oDateRange.getSecondDateValue();
+
+            oViewModel.setProperty("/fromDate", oFromDate);
+            oViewModel.setProperty("/toDate", oToDate);
+        },
+        onExportToExcel: async function () {
+            const oViewModel = this.getView().getModel("viewModel");
+            const oModel = this.getOwnerComponent().getModel();
+            const FromDate = oViewModel.getData().fromDate;
+            const ToDate = oViewModel.getData().toDate;
+
+            const that = this;
+
+            oModel.callFunction("/exportFilterData", {
+                method: "GET",
+                urlParameters: { startDate: FromDate, endDate: ToDate },
+                success: function (odata) {
+                    that.handleExcelExport(odata.exportFilterData); 
+                },
+                error: function (err) {
+                    sap.m.MessageBox.error("Failed to load request data.");
+                    console.error("OData error:", err);
+                }
+            });
+        },
+
+        handleExcelExport: async function (data) {
+            const parsedData = JSON.parse(data);
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet("Filtered Requests");
+
+            const columns = [
+                { header: "ID", key: "ID", width: 15 },
+                { header: "Title", key: "TITLE", width: 30 },
+                { header: "Type", key: "TYPE", width: 15 },
+                { header: "System", key: "SYSTEM", width: 15 },
+                { header: "Commit ID", key: "COMMITID", width: 20 },
+                { header: "Description", key: "DESCRIPTION", width: 40 },
+                { header: "Created By", key: "CREATEDBY", width: 25 },
+                { header: "Created At", key: "CREATEDAT", width: 25 },
+                { header: "Approver Level", key: "APPROVERLEVEL", width: 20 },
+                { header: "Approver System", key: "APPROVERSYSTEM", width: 20 },
+                { header: "Rejected At", key: "REJECTEDAT", width: 25 },
+                { header: "Rejected By", key: "REJECTEDBY", width: 25 },
+                { header: "Rejected Level", key: "REJECTEDLEVEL", width: 20 },
+                { header: "Rejection Comment", key: "REJECTIONCOMMENT", width: 40 },
+                { header: "Status", key: "STATUS", width: 15 },
+                { header: "Validation", key: "VALIDATION", width: 15 },
+            ];
+            sheet.columns = columns;
+
+            parsedData.forEach((entry) => {
+                sheet.addRow(entry);
+            });
+
+            sheet.getRow(1).font = { bold: true };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+            saveAs(blob, "Filtered_Requests.xlsx");
+        },
 
         getHighestLevel: function (approverLevel, status) {
             if (!approverLevel) return "";
@@ -759,7 +870,11 @@ sap.ui.define([
 
             return sDate.split("T")[0];
 
+        },
+        isVisibleForAdminCreate: function (isAdmin, mode) {
+            return isAdmin && mode === "Create";
         }
+
 
 
 

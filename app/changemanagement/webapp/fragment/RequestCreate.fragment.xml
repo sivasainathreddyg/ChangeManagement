@@ -80,11 +80,23 @@
 
             <Label
                 text="Approver Level"
-                visible="{viewModel>/isAdmin}"
+                visible="{
+                    parts: [
+                        { path: 'viewModel>/isAdmin' },
+                        { path: 'viewModel>/mode' }
+                    ],
+                    formatter: '.isVisibleForAdminCreate'
+                }"
                 required="true"
             />
             <ComboBox
-                visible="{viewModel>/isAdmin}"
+                visible="{
+                parts: [
+                    { path: 'viewModel>/isAdmin' },
+                    { path: 'viewModel>/mode' }
+                ],
+                formatter: '.isVisibleForAdminCreate'
+                }"
                 selectedKey="{CreateRequestModel>/ApproverLevel}"
                 placeholder="Select Approver Level"
                 width="100%"
@@ -130,17 +142,17 @@
             </ComboBox>
 
             <Label
-                text="Upload MTAR File"
-                visible="{= ${viewModel>/mode} === 'Create'}"
+                text="Upload File"
+                visible="{=${viewModel>/mode}==='Create'}"
             />
             <u:FileUploader
                 width="100%"
                 id="fileUploader"
-                name="mtarFile"
+                name="FileUploder"
                 fileType="mtar,pdf,doc,docx"
-                placeholder="Choose a .mtar file"
+                placeholder="Choose a file"
                 change="onFileUploadChange"
-                visible="{= ${viewModel>/mode} === 'Create'}"
+                visible="{=${viewModel>/mode}==='Create'}"
             />
         </VBox>
 

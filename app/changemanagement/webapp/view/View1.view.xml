@@ -176,6 +176,7 @@
                             id="idDateRange"
                             displayFormat="yyyy-MM-dd"
                             change="onDateRangeChange"
+                            placeholder="select the daterange "
                         />
                         <Button
                             text="Export to Excel"
@@ -346,7 +347,7 @@
                                 <!-- <Text text="{tablereqmodel>VALIDATION}" /> -->
                                 <Button
                                     icon="sap-icon://download"
-                                    press="ondownloadmtarfile"
+                                    press="ondownloadFile"
                                 />
 
                                 <VBox width="100%">
