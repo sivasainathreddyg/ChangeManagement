@@ -134,6 +134,7 @@
                 width="100%"
                 selectedKey="{CreateRequestModel>/ApproverSystem}"
                 placeholder="Select the System"
+                
             >
                 <core:ListItem
                     key="{rolesModel>Key}"

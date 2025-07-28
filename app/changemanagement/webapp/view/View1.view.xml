@@ -13,31 +13,82 @@
         <f:title>
             <f:DynamicPageTitle>
                 <f:heading>
-                    <Title
-                        text="Change Management"
-                        level="H1"
-                    />
-                </f:heading>
-                <f:actions>
-                    <Label text="Dark Mode:" />
-                    <Switch
-                        state="false"
-                        change=".onThemeSwitch"
-                        tooltip="Toggle Dark/Light Theme"
-                    />
+                    <HBox
+                        alignItems="Center"
+                        wrap="Wrap"
+                        class="sapUiSmallMargin"
+                    >
+                        <Title
+                            text="Change Management"
+                            level="H1"
+                        />
 
-                    <Button
-                        text="Create Request"
-                        type="Emphasized"
-                        press="onCreateRequest"
-                    />
-                    <Button
-                        text="Update"
-                        id="idupdatebtn"
-                        press="onUpdateSelectedRow"
-                        enabled="false"
-                        type="Emphasized"
-                    />
+                        <!-- Status Tiles beside title -->
+                        <HBox
+                            justifyContent="Start"
+                            class="sapUiTinyMarginBegin"
+                        >
+                            <ObjectNumber
+                                number="{counts>/inApproval}"
+                                unit="In Approval"
+                                emphasized="true"
+                                state="Warning"
+                                class="sapUiTinyMarginBegin"
+                            />
+                            <ObjectNumber
+                                number="{counts>/approved}"
+                                unit="Approved"
+                                emphasized="true"
+                                state="Success"
+                                class="sapUiTinyMarginBegin"
+                            />
+                            <ObjectNumber
+                                number="{counts>/rejected}"
+                                unit="Rejected"
+                                emphasized="true"
+                                state="Error"
+                                class="sapUiTinyMarginBegin"
+                            />
+                        </HBox>
+                    </HBox>
+                </f:heading>
+
+                <f:actions>
+                    <HBox
+                        alignItems="Center"
+                        wrap="Wrap"
+                    >
+                        <Label text="Dark Mode:" />
+                        <Switch
+                            state="false"
+                            change=".onThemeSwitch"
+                            tooltip="Toggle Dark/Light Theme"
+                        />
+
+                        <DatePicker
+                            id="monthPicker"
+                            displayFormat="MMMM yyyy"
+                            valueFormat="yyyy-MM-dd"
+                            change="onMonthChange"
+                            class="sapUiSmallMarginBegin"
+                            width="90%"
+                        />
+
+                        <Button
+                            text="Create Request"
+                            type="Emphasized"
+                            press="onCreateRequest"
+                            class="sapUiSmallMarginBegin"
+                        />
+                        <Button
+                            text="Update"
+                            id="idupdatebtn"
+                            press="onUpdateSelectedRow"
+                            enabled="false"
+                            type="Emphasized"
+                            class="sapUiSmallMarginBegin"
+                        />
+                    </HBox>
                 </f:actions>
             </f:DynamicPageTitle>
         </f:title>
@@ -301,10 +352,7 @@
                         <Column hAlign="Center">
                             <Text text="Commit ID" />
                         </Column>
-                        <Column
-                            hAlign="Center"
-                            width="6%"
-                        >
+                        <Column hAlign="Center">
                             <Text text="Description" />
                         </Column>
                         <Column

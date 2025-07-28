@@ -266,11 +266,41 @@ module.exports = cds.service.impl(async function () {
     /**
      * ReadReqdata handler
      */
+    // this.on("ReadReqdata", async (req) => {
+    //     try {
+    //         const result = await cds.transaction(req).run(
+    //             SELECT.from("CHANGEMANAGEMENTSERVICE_CHANGEREQUESTVIEW")
+    //         );
+    //         return { value: JSON.stringify(result) };
+    //     } catch (error) {
+    //         console.error("Error reading requests:", error);
+    //         req.error(500, "Failed to fetch requests");
+    //     }
+    // });
+
     this.on("ReadReqdata", async (req) => {
+        const { fromDate, toDate, email, isAdmin, isApprover } = req.data;
+
+
+        const userEmail = email;
+
+        const whereClause = [
+            { ref: ["CREATEDAT"] }, ">=", { val: fromDate },
+            "and",
+            { ref: ["CREATEDAT"] }, "<=", { val: toDate }
+        ];
+
+        // Only if NOT admin or approver, restrict by email
+        if (!isAdmin && !isApprover) {
+            whereClause.push("and");
+            whereClause.push({ ref: ["CREATEDBY"] }, "=", { val: userEmail });
+        }
+
         try {
             const result = await cds.transaction(req).run(
-                SELECT.from("CHANGEMANAGEMENTSERVICE_CHANGEREQUESTVIEW")
+                SELECT.from("CHANGEMANAGEMENTSERVICE_CHANGEREQUESTVIEW").where(whereClause)
             );
+
             return { value: JSON.stringify(result) };
         } catch (error) {
             console.error("Error reading requests:", error);
@@ -278,27 +308,67 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+
+
+
+
     /**
      * FilterOperator handler
      */
     this.on("FilterOperator", async (req) => {
         try {
-            const { System, Type, Status } = JSON.parse(req.data.filterdata);
-            const whereClause = {};
-            if (System && System !== "All") whereClause.SYSTEM = System;
-            if (Type && Type !== "All") whereClause.TYPE = Type;
-            if (Status && Status !== "All") whereClause.STATUS = Status;
+            const {
+                System,
+                Type,
+                Status,
+                userEmail,
+                isAdmin,
+                isApprover,
+                fromDate,
+                toDate
+            } = JSON.parse(req.data.filterdata);
+
+            const whereClause = [];
+
+            // Add system, type, status filters
+            if (System && System !== "All") {
+                whereClause.push({ ref: ["SYSTEM"] }, "=", { val: System }, "and");
+            }
+            if (Type && Type !== "All") {
+                whereClause.push({ ref: ["TYPE"] }, "=", { val: Type }, "and");
+            }
+            if (Status && Status !== "All") {
+                whereClause.push({ ref: ["STATUS"] }, "=", { val: Status }, "and");
+            }
+
+            // Date range filter
+            if (fromDate && toDate) {
+                whereClause.push({ ref: ["CREATEDAT"] }, ">=", { val: fromDate }, "and");
+                whereClause.push({ ref: ["CREATEDAT"] }, "<=", { val: toDate }, "and");
+            }
+
+            // Only add email filter if not admin or approver
+            if (!isAdmin && !isApprover && userEmail) {
+                whereClause.push({ ref: ["CREATEDBY"] }, "=", { val: userEmail }, "and");
+            }
+
+            // Remove trailing "and" if it exists
+            if (whereClause.length > 0 && whereClause[whereClause.length - 1] === "and") {
+                whereClause.pop();
+            }
 
             const result = await cds.transaction(req).run(
                 SELECT.from("CHANGEMANAGEMENTSERVICE_CHANGEREQUESTVIEW").where(whereClause)
             );
 
             return { value: JSON.stringify(result) };
+
         } catch (error) {
             console.error("Error filtering requests:", error);
             req.error(500, "Failed to fetch filtered requests");
         }
     });
+
 
     this.on("exportFilterData", async (req) => {
         try {

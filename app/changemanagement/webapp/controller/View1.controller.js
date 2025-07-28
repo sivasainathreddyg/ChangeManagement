@@ -14,7 +14,7 @@ sap.ui.define([
             // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
             const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
             this.getView().setModel(viewModel, "viewModel");
-            const email = "admin@gmail.com";
+            const email = "user1@gmail.com";
             if (email === "admin@gmail.com") {
                 viewModel.setProperty("/isAdmin", true);
                 viewModel.setProperty("/userEmail", email);
@@ -27,18 +27,21 @@ sap.ui.define([
                         if (data.results.length > 0) {
                             viewModel.setProperty("/userLevel", data.results[0].Level);
                             viewModel.setProperty("/isApprover", true);
+
                         }
+                        this.readrequestdata();
+
                     }
                 });
-                this.readrequestdata();
+
             }
             var oModel = new sap.ui.model.json.JSONModel({
                 Roles: [
-                    { Category: "SBP", Key: "VCDE", Text: "VCDE" },
-                    { Category: "SBP", Key: "VCPR", Text: "VCPR" },
-                    { Category: "SBP", Key: "VCDT", Text: "VCDT" },
-                    { Category: "SBP", Key: "VCT1", Text: "VCT1" },
-                    { Category: "SBP", Key: "VCT2", Text: "VCT2" },
+                    { Category: "SBP", Key: "VCDE", Text: "VCDE SBP Development" },
+                    { Category: "SBP", Key: "VCPR", Text: "VCPR SBP Production" },
+                    { Category: "SBP", Key: "VCDT", Text: "VCDT SBP DevTest" },
+                    { Category: "SBP", Key: "VCT1", Text: "VCT1 SBP Test1" },
+                    { Category: "SBP", Key: "VCT2", Text: "VCT2 SBP Test2" },
                     { Category: "CLIENT 1", Key: "SCT", Text: "SCT" },
                     { Category: "CLIENT 1", Key: "SCP", Text: "SCP" }
                 ]
@@ -155,11 +158,61 @@ sap.ui.define([
 
         },
         readrequestdata: function () {
+            const oDatePicker = this.byId("monthPicker");
+            const selectedDate = oDatePicker.getDateValue();
+            let fromDate, toDate;
+            if (selectedDate) {
+                const FromDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                const ToDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+
+                fromDate = FromDate.toISOString(); 
+                toDate = ToDate.toISOString();
+
+            } else {
+                const today = new Date();
+                const past30Days = new Date();
+                past30Days.setDate(today.getDate() - 30);
+
+                fromDate = past30Days.toISOString();
+                toDate = today.toISOString();
+            }
+            const userEmail = this.getView().getModel("viewModel").getProperty("/userEmail");
+            const isAdmin = this.getView().getModel("viewModel").getProperty("/isAdmin");
+            const isApprover = this.getView().getModel("viewModel").getProperty("/isApprover");
+
             const oModel = this.getOwnerComponent().getModel();
             oModel.callFunction("/ReadReqdata", {
                 method: "GET",
+                urlParameters: {
+                    fromDate: fromDate,
+                    toDate: toDate,
+                    email: userEmail,
+                    isAdmin: isAdmin,
+                    isApprover: isApprover
+                },
+
                 success: function (oData) {
                     var parsedreqdata = JSON.parse(oData.ReadReqdata);
+                    const counts = {
+                        inApproval: 0,
+                        approved: 0,
+                        rejected: 0
+                    };
+                    
+                    parsedreqdata.forEach(item => {
+                        const status = (item.STATUS || "").toLowerCase();
+                        if (status === "in approval") {
+                            counts.inApproval++;
+                        } else if (status === "approved") {
+                            counts.approved++;
+                        } else if (status === "rejected") {
+                            counts.rejected++;
+                        }
+                    });
+                    
+                    // this.getView().setModel(new sap.ui.model.json.JSONModel(counts), "counts");
+                    var countsModel=new sap.ui.model.json.JSONModel(counts);
+                    this.getView().setModel(countsModel,"counts")
                     var reqModel = new sap.ui.model.json.JSONModel(parsedreqdata);
                     this.getView().setModel(reqModel, "tablereqmodel")
 
@@ -172,12 +225,91 @@ sap.ui.define([
             })
 
         },
+        onMonthChange: function (oEvent) {
+            const oDatePicker = oEvent.getSource();
+            const selectedDate = oDatePicker.getDateValue(); // JavaScript Date object
+
+            if (!selectedDate) return;
+
+            // Calculate the first and last day of the selected month
+            const fromDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            const toDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+
+            const fromDateStr = fromDate.toISOString(); // CAP expects ISO format
+            const toDateStr = toDate.toISOString();
+
+            const viewModel = this.getView().getModel("viewModel");
+            const email = viewModel.getProperty("/userEmail");
+            const isAdmin = viewModel.getProperty("/isAdmin");
+            const isApprover = viewModel.getProperty("/isApprover");
+
+            const oModel = this.getOwnerComponent().getModel();
+
+            oModel.callFunction("/ReadReqdata", {
+                method: "GET",
+                urlParameters: {
+                    fromDate: fromDateStr,
+                    toDate: toDateStr,
+                    email: email,
+                    isAdmin: isAdmin,
+                    isApprover: isApprover
+                },
+                success: (oData) => {
+                    var parsedreqdata = JSON.parse(oData.ReadReqdata);
+                    const counts = {
+                        inApproval: 0,
+                        approved: 0,
+                        rejected: 0
+                    };
+                    
+                    parsedreqdata.forEach(item => {
+                        const status = (item.STATUS || "").toLowerCase();
+                        if (status === "in approval") {
+                            counts.inApproval++;
+                        } else if (status === "approved") {
+                            counts.approved++;
+                        } else if (status === "rejected") {
+                            counts.rejected++;
+                        }
+                    });
+                    var countsModel=new sap.ui.model.json.JSONModel(counts);
+                    this.getView().setModel(countsModel,"counts")
+                    var reqModel = new sap.ui.model.json.JSONModel(parsedreqdata);
+                    this.getView().setModel(reqModel, "tablereqmodel")
+                },
+                error: (err) => {
+                    console.error("Error fetching data:", err);
+                }
+            });
+        },
         onfilterchange: function () {
+            const oDatePicker = this.byId("monthPicker");
+            const selectedDate = oDatePicker.getDateValue();
+            let fromDate, toDate;
+            if (selectedDate) {
+                const FromDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                const ToDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+
+                fromDate = FromDate.toISOString(); 
+                toDate = ToDate.toISOString();
+
+            } else {
+                const today = new Date();
+                const past30Days = new Date();
+                past30Days.setDate(today.getDate() - 30);
+
+                fromDate = past30Days.toISOString();
+                toDate = today.toISOString();
+            }
+            const userEmail = this.getView().getModel("viewModel").getProperty("/userEmail");
+            const isAdmin = this.getView().getModel("viewModel").getProperty("/isAdmin");
+            const isApprover = this.getView().getModel("viewModel").getProperty("/isApprover");
+
             const System = this.byId("systemFilter").getSelectedKey();
             const Type = this.byId("typeFilter").getSelectedKey();
             const Status = this.byId("statusFilter").getSelectedKey();
 
-            const filters = { System, Type, Status };
+            const filters = { System, Type, Status ,userEmail,isAdmin,isApprover,fromDate,toDate};
             const oModel = this.getOwnerComponent().getModel();
 
             oModel.callFunction("/FilterOperator", {
@@ -309,6 +441,7 @@ sap.ui.define([
             const isValid = requiredFields.every(field => oData[field]);
             if (!isValid) {
                 MessageToast.show("Please fill in all required fields.");
+                that.busyDialog.close();
                 return;
             }
 
@@ -398,7 +531,7 @@ sap.ui.define([
                         }
 
                         if (uploadSuccess) {
-                            MessageToast.show("Request created successfully with file.");
+                            MessageToast.show("Request created successfully ");
                             this.pDialog.close();
                             this.readrequestdata();
                             that.busyDialog.close();
@@ -841,6 +974,8 @@ sap.ui.define([
             const isAdmin = viewModel.getProperty("/isAdmin");
             return isAdmin ? "Select any Approval level" : "No data available";
         },
+
+
         getValidationState: function (sValue) {
             if (sValue === "Approved") return "Success";
             if (sValue === "Rejected") return "Error";
