@@ -34,6 +34,7 @@
                                 emphasized="true"
                                 state="Warning"
                                 class="sapUiTinyMarginBegin"
+                                
                             />
                             <ObjectNumber
                                 number="{counts>/approved}"
@@ -72,6 +73,8 @@
                             change="onMonthChange"
                             class="sapUiSmallMarginBegin"
                             width="90%"
+            
+                            
                         />
 
                         <Button

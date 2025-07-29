@@ -9,47 +9,76 @@ sap.ui.define([
     var that = this;
 
     return Controller.extend("com.changemanagement.controller.View1", {
-        onInit() {
-
-            // const viewModel = new JSONModel({ userLevel: "Level 4",isApprover: true });
-            const viewModel = new JSONModel({ userLevel: "", isApprover: false, isAdmin: false });
+        onInit: function () {
+            const viewModel = new sap.ui.model.json.JSONModel({
+                userLevel: "",
+                isApprover: false,
+                isAdmin: false
+            });
             this.getView().setModel(viewModel, "viewModel");
-            const email = "user1@gmail.com";
+
+            const email = "level3@gmail.com";
+            const oModel = this.getOwnerComponent().getModel();
+            const rolesData = [
+                { Category: "SBP", Key: "VCDE", Text: "VCDE SBP Deployment" },
+                { Category: "SBP", Key: "VCPR", Text: "VCPR SBP Production" },
+                { Category: "SBP", Key: "VCDT", Text: "VCDT SBP DevTest" },
+                { Category: "SBP", Key: "VCT1", Text: "VCT1 SBP Test1" },
+                { Category: "SBP", Key: "VCT2", Text: "VCT2 SBP Test2" },
+                { Category: "CLIENT 1", Key: "SCT", Text: "SCT" },
+                { Category: "CLIENT 1", Key: "SCP", Text: "SCP" }
+            ];
+
             if (email === "admin@gmail.com") {
                 viewModel.setProperty("/isAdmin", true);
                 viewModel.setProperty("/userEmail", email);
+                // Admin sees all roles
+                const oRolesModel = new sap.ui.model.json.JSONModel({ Roles: rolesData });
+                this.getView().setModel(oRolesModel, "rolesModel");
+
             } else {
                 viewModel.setProperty("/userEmail", email);
-                const oModel = this.getOwnerComponent().getModel();
                 oModel.read("/Approvers", {
                     filters: [new sap.ui.model.Filter("Email", "EQ", email)],
                     success: (data) => {
+                        let filteredRoles = rolesData;
                         if (data.results.length > 0) {
-                            viewModel.setProperty("/userLevel", data.results[0].Level);
+                            const userLevel = data.results[0].Level;
+                            viewModel.setProperty("/userLevel", userLevel);
                             viewModel.setProperty("/isApprover", true);
 
+                            if (userLevel === "Level 3") {
+                                const blockedKeys = ["VCDT", "VCT1", "VCT2"];
+                                filteredRoles = rolesData.filter(role => !blockedKeys.includes(role.Key));
+                            }
+                            if (userLevel === "Level 2" || userLevel === "Level 1") {
+                                const blockedKeys = ["VCDT", "VCT1", "VCT2", "VCDE", "VCPR"];
+                                filteredRoles = rolesData.filter(role => !blockedKeys.includes(role.Key));
+                            }
                         }
-                        this.readrequestdata();
 
+                        const oRolesModel = new sap.ui.model.json.JSONModel({ Roles: filteredRoles });
+                        this.getView().setModel(oRolesModel, "rolesModel");
+
+                        this.readrequestdata();
                     }
                 });
+            }
+        },
+        onAfterRendering: function () {
+            const oDatePicker = this.byId("monthPicker");
+
+            if (oDatePicker) {
+                const input = oDatePicker.$().find("input");
+
+                input.on("keydown", function (e) {
+                    e.preventDefault();
+                });
+
 
             }
-            var oModel = new sap.ui.model.json.JSONModel({
-                Roles: [
-                    { Category: "SBP", Key: "VCDE", Text: "VCDE SBP Development" },
-                    { Category: "SBP", Key: "VCPR", Text: "VCPR SBP Production" },
-                    { Category: "SBP", Key: "VCDT", Text: "VCDT SBP DevTest" },
-                    { Category: "SBP", Key: "VCT1", Text: "VCT1 SBP Test1" },
-                    { Category: "SBP", Key: "VCT2", Text: "VCT2 SBP Test2" },
-                    { Category: "CLIENT 1", Key: "SCT", Text: "SCT" },
-                    { Category: "CLIENT 1", Key: "SCP", Text: "SCP" }
-                ]
-            });
-            this.getView().setModel(oModel, "rolesModel");
-
-
         },
+
         onThemeSwitch: function (oEvent) {
             const bIsDark = oEvent.getParameter("state");
             const newTheme = bIsDark ? "sap_horizon_dark" : "sap_horizon";
@@ -154,6 +183,26 @@ sap.ui.define([
             const viewModel = this.getView().getModel("viewModel");
             viewModel.setProperty("/userLevel", SelectedLevel);
             viewModel.setProperty("/isApprover", true);
+            that.rolesData = [
+                { Category: "SBP", Key: "VCDE", Text: "VCDE SBP Deployment" },
+                { Category: "SBP", Key: "VCPR", Text: "VCPR SBP Production" },
+                { Category: "SBP", Key: "VCDT", Text: "VCDT SBP DevTest" },
+                { Category: "SBP", Key: "VCT1", Text: "VCT1 SBP Test1" },
+                { Category: "SBP", Key: "VCT2", Text: "VCT2 SBP Test2" },
+                { Category: "CLIENT 1", Key: "SCT", Text: "SCT" },
+                { Category: "CLIENT 1", Key: "SCP", Text: "SCP" }
+            ];
+            let filteredRoles = that.rolesData;
+            if (SelectedLevel === "Level 3") {
+                const blockedKeys = ["VCDT", "VCT1", "VCT2"];
+                filteredRoles = that.rolesData.filter(role => !blockedKeys.includes(role.Key));
+            }
+            if (SelectedLevel === "Level 2" || SelectedLevel === "Level 1") {
+                const blockedKeys = ["VCDT", "VCT1", "VCT2", "VCDE", "VCPR"];
+                filteredRoles = that.rolesData.filter(role => !blockedKeys.includes(role.Key));
+            }
+            const oRolesModel = new sap.ui.model.json.JSONModel({ Roles: filteredRoles });
+            this.getView().setModel(oRolesModel, "rolesModel");
             this.readrequestdata();
 
         },
@@ -165,7 +214,7 @@ sap.ui.define([
                 const FromDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
                 const ToDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
 
-                fromDate = FromDate.toISOString(); 
+                fromDate = FromDate.toISOString();
                 toDate = ToDate.toISOString();
 
             } else {
@@ -198,7 +247,7 @@ sap.ui.define([
                         approved: 0,
                         rejected: 0
                     };
-                    
+
                     parsedreqdata.forEach(item => {
                         const status = (item.STATUS || "").toLowerCase();
                         if (status === "in approval") {
@@ -209,10 +258,10 @@ sap.ui.define([
                             counts.rejected++;
                         }
                     });
-                    
+
                     // this.getView().setModel(new sap.ui.model.json.JSONModel(counts), "counts");
-                    var countsModel=new sap.ui.model.json.JSONModel(counts);
-                    this.getView().setModel(countsModel,"counts")
+                    var countsModel = new sap.ui.model.json.JSONModel(counts);
+                    this.getView().setModel(countsModel, "counts")
                     var reqModel = new sap.ui.model.json.JSONModel(parsedreqdata);
                     this.getView().setModel(reqModel, "tablereqmodel")
 
@@ -261,7 +310,7 @@ sap.ui.define([
                         approved: 0,
                         rejected: 0
                     };
-                    
+
                     parsedreqdata.forEach(item => {
                         const status = (item.STATUS || "").toLowerCase();
                         if (status === "in approval") {
@@ -272,8 +321,8 @@ sap.ui.define([
                             counts.rejected++;
                         }
                     });
-                    var countsModel=new sap.ui.model.json.JSONModel(counts);
-                    this.getView().setModel(countsModel,"counts")
+                    var countsModel = new sap.ui.model.json.JSONModel(counts);
+                    this.getView().setModel(countsModel, "counts")
                     var reqModel = new sap.ui.model.json.JSONModel(parsedreqdata);
                     this.getView().setModel(reqModel, "tablereqmodel")
                 },
@@ -290,7 +339,7 @@ sap.ui.define([
                 const FromDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
                 const ToDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
 
-                fromDate = FromDate.toISOString(); 
+                fromDate = FromDate.toISOString();
                 toDate = ToDate.toISOString();
 
             } else {
@@ -309,7 +358,7 @@ sap.ui.define([
             const Type = this.byId("typeFilter").getSelectedKey();
             const Status = this.byId("statusFilter").getSelectedKey();
 
-            const filters = { System, Type, Status ,userEmail,isAdmin,isApprover,fromDate,toDate};
+            const filters = { System, Type, Status, userEmail, isAdmin, isApprover, fromDate, toDate };
             const oModel = this.getOwnerComponent().getModel();
 
             oModel.callFunction("/FilterOperator", {
@@ -446,40 +495,93 @@ sap.ui.define([
             }
 
             const email = this.getView().getModel("viewModel").getProperty("/userEmail");
-            const uniqueID = Date.now() % 1000000000 + Math.floor(Math.random() * 1000);
+            const userLevel = this.getView().getModel("viewModel").getProperty("/userLevel");
+            const isAdmin = this.getView().getModel("viewModel").getProperty("/isAdmin");
+            const uniqueID = Date.now() % 1000000000 + Math.floor(Math.random() * 1000)
 
             let approvallevel = "";
             let status = "In Approval";
             let validation = "Not Started";
+            let approveddate = "";
 
-            const levelMap = {
-                "sai@gmail.com": "Level 1, Level 2, Level 3",
-                "pavan@gmail.com": "Level 1, Level 2",
-                "siva@gmail.com": "Level 1",
-                "reddy@gmail.com": ""
+            // const levelMap = {
+            //     "sai@gmail.com": "Level 1, Level 2, Level 3",
+            //     "pavan@gmail.com": "Level 1, Level 2",
+            //     "siva@gmail.com": "Level 1",
+            //     "reddy@gmail.com": ""
+            // };
+
+            // const adminLevelMap = {
+            //     "Level 4": "Level 1, Level 2, Level 3",
+            //     "Level 3": "Level 1, Level 2",
+            //     "Level 2": "Level 1",
+            //     "Level 1": ""
+            // };
+            const systemsMap = {
+                "VCT1": ["Level 4"],
+                "VCT2": ["Level 4"],
+                "VCDT": ["Level 4"],
+                "VCDE": ["Level 3", "Level 4"],
+                "VCPR": ["Level 3", "Level 4"],
+                "SCT": ["Level 1", "Level 2", "Level 3"],
+                "SCP": ["Level 1", "Level 2", "Level 3"]
             };
+            const normalizedSystem = oData.ApproverSystem;
+            const requiredLevels = systemsMap[normalizedSystem] || [];
 
-            const adminLevelMap = {
-                "Level 4": "Level 1, Level 2, Level 3",
-                "Level 3": "Level 1, Level 2",
-                "Level 2": "Level 1",
-                "Level 1": ""
-            };
+            // if (email === "admin@gmail.com") {
+            //     const level = oData.ApproverLevel;
+            //     approvallevel = adminLevelMap[level] || "";
+            //     if (approvallevel === "") {
+            //         status = "Approved";
+            //         validation = "Passed";
+            //     }
+            // } else {
+            //     approvallevel = levelMap[email] || "Level 1, Level 2, Level 3, Level 4";
+            //     if (email === "reddy@gmail.com") {
+            //         status = "Approved";
+            //         validation = "Passed";
+            //     }
+            // }
 
-            if (email === "admin@gmail.com") {
-                const level = oData.ApproverLevel;
-                approvallevel = adminLevelMap[level] || "";
+            if (isAdmin) {
+                // Admin selects level from dropdown (simulates approver level)
+                const adminLevel = oData.ApproverLevel;
+                const remaining = getRemainingLevels(adminLevel);
+                approvallevel = requiredLevels.filter(l => remaining.includes(l)).join(", ");
                 if (approvallevel === "") {
+                    approveddate = new Date().toISOString();
+                    status = "Approved";
+                    validation = "Passed";
+                }
+            } else if (requiredLevels.includes(userLevel)) {
+                let remainingLevels;
+                const userLevelNum = parseInt(userLevel.split(" ")[1]);
+                const requiredLevelNums = requiredLevels.map(l => parseInt(l.split(" ")[1]));
+
+                const hasOnlyLowerOrSameLevels = requiredLevelNums.every(l => l >= userLevelNum);
+
+                if (hasOnlyLowerOrSameLevels) {
+                    remainingLevels = [];
+                } else {
+                    remainingLevels = requiredLevels.filter(level => {
+                        const levelNum = parseInt(level.split(" ")[1]);
+                        return levelNum < userLevelNum;
+                    });
+                }
+
+                approvallevel = remainingLevels.join(", ");
+
+                if (approvallevel === "") {
+
                     status = "Approved";
                     validation = "Passed";
                 }
             } else {
-                approvallevel = levelMap[email] || "Level 1, Level 2, Level 3, Level 4";
-                if (email === "reddy@gmail.com") {
-                    status = "Approved";
-                    validation = "Passed";
-                }
+
+                approvallevel = requiredLevels.join(", ");
             }
+
 
             const newRequest = {
                 ID: String(uniqueID),
@@ -493,8 +595,13 @@ sap.ui.define([
                 COMMITID: oData.Commitid,
                 DESCRIPTION: oData.description,
                 CREATEDBY: email,
-                CREATEDAT: new Date().toISOString()
+                CREATEDAT: new Date().toISOString(),
+
             };
+            if (approvallevel === "") {
+                approveddate = new Date().toISOString();
+                newRequest.APPROVEDDATE = approveddate;
+            }
 
             // const urlParameters = {
             //     requestdata: JSON.stringify(newRequest)
@@ -546,6 +653,11 @@ sap.ui.define([
                     that.busyDialog.close();
                 }
             });
+        },
+        getRemainingLevels: function (level) {
+            const allLevels = ["Level 4", "Level 3", "Level 2", "Level 1"];
+            const idx = allLevels.indexOf(level);
+            return idx >= 0 ? allLevels.slice(idx + 1) : allLevels;
         },
         deleteRequest: function (uniqueID) {
             const oModel = this.getOwnerComponent().getModel();
