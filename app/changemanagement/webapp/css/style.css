@@ -17,3 +17,11 @@
 div#container-com\.changemanagement---View1--dynamicPage-content {
   padding: 0;
 }
+
+.bold {
+  font-weight: bold;
+}
+
+div#container-com\.changemanagement---View1--dynamicPage-contentFitContainer {
+  padding: 0;
+}

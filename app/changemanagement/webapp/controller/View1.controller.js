@@ -17,7 +17,7 @@ sap.ui.define([
             });
             this.getView().setModel(viewModel, "viewModel");
 
-            const email = "level3@gmail.com";
+            const email = "admin@gmail.com";
             const oModel = this.getOwnerComponent().getModel();
             const rolesData = [
                 { Category: "SBP", Key: "VCDE", Text: "VCDE SBP Deployment" },
@@ -496,7 +496,7 @@ sap.ui.define([
 
             const email = this.getView().getModel("viewModel").getProperty("/userEmail");
             const userLevel = this.getView().getModel("viewModel").getProperty("/userLevel");
-            const isAdmin = this.getView().getModel("viewModel").getProperty("/isAdmin");
+            // const isAdmin = this.getView().getModel("viewModel").getProperty("/isAdmin");
             const uniqueID = Date.now() % 1000000000 + Math.floor(Math.random() * 1000)
 
             let approvallevel = "";
@@ -544,17 +544,7 @@ sap.ui.define([
             //     }
             // }
 
-            if (isAdmin) {
-                // Admin selects level from dropdown (simulates approver level)
-                const adminLevel = oData.ApproverLevel;
-                const remaining = getRemainingLevels(adminLevel);
-                approvallevel = requiredLevels.filter(l => remaining.includes(l)).join(", ");
-                if (approvallevel === "") {
-                    approveddate = new Date().toISOString();
-                    status = "Approved";
-                    validation = "Passed";
-                }
-            } else if (requiredLevels.includes(userLevel)) {
+            if (requiredLevels.includes(userLevel)) {
                 let remainingLevels;
                 const userLevelNum = parseInt(userLevel.split(" ")[1]);
                 const requiredLevelNums = requiredLevels.map(l => parseInt(l.split(" ")[1]));
@@ -1053,15 +1043,20 @@ sap.ui.define([
             return userLevel === currentLevel;
         },
         getApprovedText: function (approverLevel, status, userLevel, NotApplicable) {
+            if (NotApplicable === userLevel) {
+                return "NotApplicable"
+
+            }
+            if (status === "Approved") {
+                return "Approved"
+            }
             if (!approverLevel || !status || !userLevel) return "";
 
             if (status === "Rejected") {
                 return "Rejected ";
             }
-            if (NotApplicable === userLevel) {
-                return "NotApplicable"
 
-            }
+
 
             const levels = approverLevel.split(",").map(l => l.trim());
             const allLevels = ["Level 1", "Level 2", "Level 3", "Level 4"];

@@ -28,27 +28,29 @@
                             justifyContent="Start"
                             class="sapUiTinyMarginBegin"
                         >
+                        <VBox >
                             <ObjectNumber
                                 number="{counts>/inApproval}"
                                 unit="In Approval"
                                 emphasized="true"
                                 state="Warning"
-                                class="sapUiTinyMarginBegin"
+                                class="sapUiTinyMarginBegin bold"
                                 
                             />
+                        </VBox>
                             <ObjectNumber
                                 number="{counts>/approved}"
                                 unit="Approved"
                                 emphasized="true"
                                 state="Success"
-                                class="sapUiTinyMarginBegin"
+                                class="sapUiTinyMarginBegin bold"
                             />
                             <ObjectNumber
                                 number="{counts>/rejected}"
                                 unit="Rejected"
                                 emphasized="true"
                                 state="Error"
-                                class="sapUiTinyMarginBegin"
+                                class="sapUiTinyMarginBegin bold"
                             />
                         </HBox>
                     </HBox>
